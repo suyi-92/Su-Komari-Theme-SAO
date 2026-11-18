@@ -60,12 +60,17 @@ describe("homepage ping task bindings", () => {
     expect(hasHomepagePingTaskBinding("node-c", bindings)).toBe(false);
   });
 
-  it("normalizes the multi-task selection without truncating its display order", () => {
+  it("preserves the display order of up to ten distinct multi-ping tasks", () => {
     expect(normalizeHomepageMultiPingTaskIds(["3", 1, 3, 2, 4])).toEqual([3, 1, 2, 4]);
     expect(
       normalizeHomepageMultiPingTaskIds([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
     ).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
     expect(HOMEPAGE_MULTI_PING_MIN_COUNT).toBe(1);
+  });
+
+  it("keeps the first ten valid, distinct tasks from an oversized selection", () => {
+    const taskIds = [12, "3", 0, 3, "invalid", 11, 10, 9, 8, 7, 6, 5, 4, 2, 1];
+    expect(normalizeHomepageMultiPingTaskIds(taskIds)).toEqual([12, 3, 11, 10, 9, 8, 7, 6, 5, 4]);
   });
 
   it("checks whether homepage multi-ping is configured", () => {

@@ -37,7 +37,7 @@ import {
   dedupeGroupLabels,
   sortHomeGroupOptions,
 } from "@/utils/homeNodes";
-import { isHomepageMultiPingConfigured } from "@/utils/pingTasks";
+import { HOMEPAGE_MULTI_PING_MAX_COUNT, isHomepageMultiPingConfigured } from "@/utils/pingTasks";
 import { normalizeThemeSettings } from "@/utils/themeSettings";
 import { sortNodesByWeight } from "./components/CarrierLossConfigModal";
 
@@ -293,9 +293,9 @@ export function ThemeManage() {
     });
   }, [sortedTasks, taskSearch]);
 
-  const canAddMultiPingTask = sortedTasks.some(
-    (task) => !draft.homepageMultiPingTaskIds.includes(task.id),
-  );
+  const canAddMultiPingTask =
+    draft.homepageMultiPingTaskIds.length < HOMEPAGE_MULTI_PING_MAX_COUNT &&
+    sortedTasks.some((task) => !draft.homepageMultiPingTaskIds.includes(task.id));
 
   const assignedTaskByClientUuid = useMemo(
     () => invertBindings(draft.homepagePingBindings),

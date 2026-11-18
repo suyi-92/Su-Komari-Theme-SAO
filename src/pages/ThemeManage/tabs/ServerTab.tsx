@@ -31,6 +31,7 @@ import {
   buildTrafficQuotaSegmentColors,
 } from "@/utils/metricTone";
 import {
+  HOMEPAGE_MULTI_PING_MAX_COUNT,
   HOMEPAGE_MULTI_PING_MIN_COUNT,
   type HomepagePingTaskBindings,
 } from "@/utils/pingTasks";
@@ -486,7 +487,7 @@ export function ServerTab({
                         <div>
                           <span className="setting-subhead-title">多线槽位</span>
                           <p className="setting-hint mt-1">
-                            卡片将依序展示各线路的实时延迟光柱。
+                            最多可选 {HOMEPAGE_MULTI_PING_MAX_COUNT} 个不同的测速任务，卡片将依序展示各线路的实时延迟光柱。
                           </p>
                         </div>
                         {canAddMultiPingTask && (

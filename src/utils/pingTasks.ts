@@ -1,6 +1,7 @@
 export type HomepagePingTaskBindings = Record<string, string[]>;
 
 export const HOMEPAGE_MULTI_PING_MIN_COUNT = 1;
+export const HOMEPAGE_MULTI_PING_MAX_COUNT = 10;
 
 /** 兼容旧版 3 线路常量 */
 export const HOMEPAGE_MULTI_PING_TASK_COUNT = 3;
@@ -27,7 +28,7 @@ function parseTaskId(taskId: string) {
   return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null;
 }
 
-/** 保存和读取共用此函数，不截断线路，避免刷新后丢失已选项。 */
+/** 读写配置时按槽位顺序保留有效且不重复的线路，直到达到上限。 */
 export function normalizeHomepageMultiPingTaskIds(value: unknown): number[] {
   if (!Array.isArray(value)) return [];
 
@@ -41,6 +42,7 @@ export function normalizeHomepageMultiPingTaskIds(value: unknown): number[] {
           : null;
     if (taskId == null || normalized.includes(taskId)) continue;
     normalized.push(taskId);
+    if (normalized.length === HOMEPAGE_MULTI_PING_MAX_COUNT) break;
   }
   return normalized;
 }
