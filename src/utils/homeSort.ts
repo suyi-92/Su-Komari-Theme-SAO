@@ -21,6 +21,11 @@ export const HOME_SORT_FIELD_LABELS: Record<HomeSortField, string> = {
   price: "价格",
 };
 
+export const HOME_SORT_OPTIONS = HOME_SORT_FIELDS.map((value) => ({
+  value,
+  label: HOME_SORT_FIELD_LABELS[value],
+}));
+
 // 每个维度的自然默认方向:文本升序(A→Z),数值降序(高的在前)。
 export const HOME_SORT_NATURAL_DIRECTION: Record<HomeSortField, HomeSortDirection> = {
   default: "asc",

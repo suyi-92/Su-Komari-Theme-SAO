@@ -15,15 +15,13 @@ import {
 } from "lucide-react";
 import { clsx } from "clsx";
 import { InstancePanel } from "@/components/instance/InstancePanel";
+import { Dropdown } from "@/components/ui/Dropdown";
 import { Spinner } from "@/components/ui/Spinner";
 import { LatencyBars } from "@/components/node/LatencyBars";
 import { QualityBars } from "@/components/node/QualityBars";
-import { SettingSelect, ToggleRow } from "../components/SettingControls";
+import { ToggleRow } from "../components/SettingControls";
 import { TaskBindingSection } from "../components/TaskBindingSection";
-import {
-  HOME_SORT_FIELDS,
-  HOME_SORT_FIELD_LABELS,
-} from "@/utils/homeSort";
+import { HOME_SORT_OPTIONS } from "@/utils/homeSort";
 import {
   STATUS_BAR_PRESETS,
   type StatusBarPreset,
@@ -53,7 +51,19 @@ import {
   EMPTY_ADMIN_CLIENTS,
 } from "../constants";
 import type { ThemeDraft } from "../types";
-import type { AdminClient, PingTask, PingLatencyMode, PingLatencyThresholds } from "@/types/komari";
+import type { AdminClient, PingTask, PingLatencyThresholds } from "@/types/komari";
+
+const SORT_DIRECTION_OPTIONS = [
+  { value: "asc", label: "升序" },
+  { value: "desc", label: "降序" },
+] as const;
+const LATENCY_MODE_OPTIONS = [
+  { value: "regional", label: "按地区" },
+  { value: "custom", label: "自定义统一门槛" },
+] as const;
+const LATENCY_REGION_OPTIONS = (Object.keys(PING_LATENCY_PROFILES) as PingLatencyProfileId[]).map(
+  (value) => ({ value, label: PING_LATENCY_PROFILES[value].label }),
+);
 
 export function ServerTab({
   draft,
@@ -138,6 +148,10 @@ export function ServerTab({
   const previewTrafficSegmentColors = useMemo(
     () => buildTrafficQuotaSegmentColors(draft.trafficSpectrumColors),
     [draft.trafficSpectrumColors],
+  );
+  const taskOptions = useMemo(
+    () => sortedTasks.map((task) => ({ value: String(task.id), label: task.name || `线路 #${task.id}` })),
+    [sortedTasks],
   );
 
   return (
@@ -341,37 +355,27 @@ export function ServerTab({
 
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="surface-inset flex flex-col gap-2 px-4 py-3">
-                      <span className="setting-subhead-title">默认指标</span>
-                      <SettingSelect
+                      <label htmlFor="home-sort-field" className="setting-subhead-title">默认指标</label>
+                      <Dropdown
+                        id="home-sort-field"
+                        label="默认指标"
                         value={draft.homeSortField}
                         disabled={!draft.enableHomeSort}
-                        onChange={(event) =>
-                          patch(
-                            "homeSortField",
-                            event.target.value as (typeof HOME_SORT_FIELDS)[number],
-                          )
-                        }
-                      >
-                        {HOME_SORT_FIELDS.map((field) => (
-                          <option key={field} value={field}>
-                            {HOME_SORT_FIELD_LABELS[field]}
-                          </option>
-                        ))}
-                      </SettingSelect>
+                        options={HOME_SORT_OPTIONS}
+                        onValueChange={(value) => patch("homeSortField", value)}
+                      />
                     </div>
 
                     <div className="surface-inset flex flex-col gap-2 px-4 py-3">
-                      <span className="setting-subhead-title">默认次序</span>
-                      <SettingSelect
+                      <label htmlFor="home-sort-direction" className="setting-subhead-title">默认次序</label>
+                      <Dropdown
+                        id="home-sort-direction"
+                        label="默认次序"
                         value={draft.homeSortDirection}
                         disabled={!draft.enableHomeSort}
-                        onChange={(event) =>
-                          patch("homeSortDirection", event.target.value as "asc" | "desc")
-                        }
-                      >
-                        <option value="asc">升序</option>
-                        <option value="desc">降序</option>
-                      </SettingSelect>
+                        options={SORT_DIRECTION_OPTIONS}
+                        onValueChange={(value) => patch("homeSortDirection", value)}
+                      />
                     </div>
                   </div>
 
@@ -520,20 +524,19 @@ export function ServerTab({
                             key={slot}
                             className="flex items-center justify-between gap-2 rounded-[10px] border border-(--hairline) px-3 py-2 min-w-0"
                           >
-                            <span className="text-[12px] font-medium text-(--text-secondary) shrink-0">
+                            <label htmlFor={`homepage-ping-task-${slot}`} className="text-[12px] font-medium text-(--text-secondary) shrink-0">
                               槽位 #{slot + 1}
-                            </span>
-                            <SettingSelect
-                              value={String(taskId)}
-                              onChange={(event) => patchMultiPingTask(slot, event.target.value)}
-                              wrapperClassName="flex-1 min-w-0"
-                            >
-                              {sortedTasks.map((task) => (
-                                <option key={task.id} value={task.id}>
-                                  {task.name || `线路 #${task.id}`}
-                                </option>
-                              ))}
-                            </SettingSelect>
+                            </label>
+                            <div className="grid min-w-0 flex-1">
+                              <Dropdown
+                                id={`homepage-ping-task-${slot}`}
+                                label={`槽位 #${slot + 1}`}
+                                value={String(taskId)}
+                                placeholder={`线路 #${taskId}`}
+                                options={taskOptions}
+                                onValueChange={(value) => patchMultiPingTask(slot, value)}
+                              />
+                            </div>
                             {draft.homepageMultiPingTaskIds.length > HOMEPAGE_MULTI_PING_MIN_COUNT && (
                               <button
                                 type="button"
@@ -833,14 +836,15 @@ export function ServerTab({
 
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-[12px] font-medium text-(--text-secondary)">
                       <label htmlFor="ping-latency-mode">延迟评级</label>
-                      <SettingSelect
-                        id="ping-latency-mode"
-                        value={draft.pingLatencyMode}
-                        onChange={(event) => patch("pingLatencyMode", event.target.value as PingLatencyMode)}
-                      >
-                        <option value="regional">按地区</option>
-                        <option value="custom">自定义统一门槛</option>
-                      </SettingSelect>
+                      <div className="grid w-40 max-w-full">
+                        <Dropdown
+                          id="ping-latency-mode"
+                          label="延迟评级"
+                          value={draft.pingLatencyMode}
+                          options={LATENCY_MODE_OPTIONS}
+                          onValueChange={(value) => patch("pingLatencyMode", value)}
+                        />
+                      </div>
                     </div>
 
                     <div className="flex flex-col gap-2 rounded-[10px] border border-(--hairline) bg-(--bg-card) p-3">
@@ -852,15 +856,15 @@ export function ServerTab({
                         {regionalLatency && (
                           <div className="flex flex-wrap items-center gap-2 text-(--text-secondary)">
                             <label htmlFor="ping-latency-preview-region">预览地区</label>
-                            <SettingSelect
-                              id="ping-latency-preview-region"
-                              value={previewRegion}
-                              onChange={(event) => setPreviewRegion(event.target.value as PingLatencyProfileId)}
-                            >
-                              {Object.entries(PING_LATENCY_PROFILES).map(([id, profile]) => (
-                                <option key={id} value={id}>{profile.label}</option>
-                              ))}
-                            </SettingSelect>
+                            <div className="grid w-44 max-w-full">
+                              <Dropdown
+                                id="ping-latency-preview-region"
+                                label="预览地区"
+                                value={previewRegion}
+                                options={LATENCY_REGION_OPTIONS}
+                                onValueChange={setPreviewRegion}
+                              />
+                            </div>
                           </div>
                         )}
                       </div>

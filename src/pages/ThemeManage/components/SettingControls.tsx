@@ -1,6 +1,4 @@
-import { memo, type ComponentPropsWithoutRef } from "react";
-import { ChevronDown } from "lucide-react";
-import { clsx } from "clsx";
+import { memo } from "react";
 import type { BooleanDraftKey } from "../types";
 
 export const ToggleRow = memo(function ToggleRow({
@@ -31,25 +29,3 @@ export const ToggleRow = memo(function ToggleRow({
     </label>
   );
 });
-
-export function SettingSelect({
-  wrapperClassName,
-  className,
-  children,
-  ...props
-}: ComponentPropsWithoutRef<"select"> & { wrapperClassName?: string }) {
-  return (
-    <div className={clsx("setting-select", wrapperClassName)}>
-      <select
-        {...props}
-        className={clsx(
-          "surface-inset text-[13px] text-(--text-primary) outline-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0",
-          className,
-        )}
-      >
-        {children}
-      </select>
-      <ChevronDown size={14} className="setting-select-icon" aria-hidden />
-    </div>
-  );
-}

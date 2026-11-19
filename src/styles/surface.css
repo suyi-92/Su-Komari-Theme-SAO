@@ -1090,102 +1090,7 @@
   color: var(--text-tertiary);
 }
 
-/* 详情页标题旁的快速切换服务器下拉 */
-.instance-switcher {
-  position: relative;
-  display: inline-flex;
-  flex: none;
-}
-
-.instance-switcher-trigger {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  /* 紧凑、轻量：默认透明 ghost，只在 hover/展开时显底，避免和标题文字挤在一起突兀 */
-  width: 22px;
-  height: 22px;
-  padding: 0;
-  border: 1px solid transparent;
-  border-radius: 7px;
-  background: transparent;
-  color: var(--text-tertiary);
-  cursor: pointer;
-  transition: color 160ms ease, background 160ms ease, border-color 160ms ease;
-}
-
-/* 图标块级居中，消除 svg 行内基线带来的偏移 */
-.instance-switcher-trigger svg {
-  display: block;
-}
-
-.instance-switcher-trigger:hover,
-.instance-switcher-trigger[aria-expanded="true"] {
-  color: var(--text-primary);
-  border-color: var(--border);
-  background: var(--hover-bg);
-}
-
-/* 弹出菜单共享骨架:实例切换器与首页排序控件(home.css 的 .home-sort-*)是同一套 panel/item
-   视觉,组选择器只定义这一处;差异项(展开方向、宽度、item gap、切换器的可滚动)在各自规则里补充。 */
-.instance-switcher-panel,
-.home-sort-panel {
-  position: absolute;
-  top: calc(100% + 6px);
-  z-index: 30;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 6px;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  background: var(--surface);
-}
-
-.instance-switcher-panel {
-  /* 触发按钮现在紧贴标题（靠左），浮层从按钮左缘向右展开 */
-  left: 0;
-  min-width: 200px;
-  /* 移动端不超出视口宽度 */
-  max-width: min(280px, calc(100vw - 32px));
-  /* 节点多时可滚动，不撑爆页面 */
-  max-height: min(360px, 60vh);
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.instance-switcher-item,
-.home-sort-item {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  min-height: 34px;
-  padding: 0 10px;
-  border-radius: 10px;
-  color: var(--text-secondary);
-  font-size: 13px;
-  font-weight: 500;
-  text-align: left;
-  cursor: pointer;
-  transition: color 160ms ease, background 160ms ease;
-}
-
-.instance-switcher-item {
-  gap: 9px;
-}
-
-.instance-switcher-item:hover,
-.home-sort-item:hover {
-  color: var(--text-primary);
-  background: var(--hover-bg);
-}
-
-.instance-switcher-item[data-active="true"],
-.home-sort-item[data-active="true"] {
-  color: var(--text-primary);
-  background: color-mix(in srgb, var(--surface-elev-a) 92%, var(--hover-bg-a));
-  font-weight: 600;
-}
-
+/* 详情页服务器切换菜单的状态点 */
 .instance-switcher-dot {
   flex: none;
   width: 8px;
@@ -1200,18 +1105,6 @@
 
 .instance-switcher-dot[data-status="offline"] {
   background: var(--status-offline);
-}
-
-.instance-switcher-name {
-  flex: 1 1 auto;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.instance-switcher-check {
-  flex: none;
-  color: var(--text-tertiary);
 }
 
 .instance-panel-subhead {
@@ -2084,41 +1977,6 @@
 }
 
 
-.setting-select {
-  position: relative;
-  display: flex;
-  min-width: 0;
-}
-
-.setting-select > select {
-  width: 100%;
-  min-width: 0;
-  padding: 8px 34px 8px 12px;
-  -webkit-appearance: none;
-  appearance: none;
-  cursor: pointer;
-  text-overflow: ellipsis;
-  outline: none !important;
-  box-shadow: none !important;
-}
-
-.setting-select > select:focus,
-.setting-select > select:focus-visible {
-  outline: none !important;
-  outline-offset: 0 !important;
-  box-shadow: none !important;
-  border-color: var(--border-strong);
-}
-
-.setting-select-icon {
-  position: absolute;
-  top: 50%;
-  right: 12px;
-  color: var(--text-secondary);
-  transform: translateY(-50%);
-  pointer-events: none;
-}
-
 .setting-hint {
   color: var(--text-tertiary);
   font-size: 11px;
@@ -2322,4 +2180,3 @@
     display: none;
   }
 }
-

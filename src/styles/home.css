@@ -4966,77 +4966,10 @@
   margin-top: -4px;
 }
 
-.home-sort {
-  position: relative;
-}
-
 .home-controls-bar .home-sort {
   flex: none;
   margin-inline-start: auto;
   margin-top: 3px;
-}
-
-.home-sort-trigger {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 34px;
-  padding: 0 12px;
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  border-radius: 10px;
-  background: #ffffff;
-  color: var(--text-secondary);
-  font-size: 12px;
-  font-weight: 600;
-  white-space: nowrap;
-  cursor: pointer;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
-  transition: all 160ms ease;
-}
-
-:root[data-appearance="dark"] .home-sort-trigger {
-  background: color-mix(in srgb, var(--surface) 60%, var(--surface-elev) 40%);
-  border-color: rgba(255, 255, 255, 0.08);
-}
-
-.home-sort-trigger:hover,
-.home-sort-trigger[aria-expanded="true"] {
-  background: #ffffff;
-  color: var(--text-primary);
-  border-color: rgba(0, 0, 0, 0.14);
-}
-
-:root[data-appearance="dark"] .home-sort-trigger:hover,
-:root[data-appearance="dark"] .home-sort-trigger[aria-expanded="true"] {
-  background: var(--surface-elev);
-  color: var(--text-primary);
-  border-color: color-mix(in srgb, var(--border-strong) 60%, transparent);
-}
-
-/* panel/item 骨架及 hover/激活态与实例切换器共享,见 surface.css 的弹出菜单组选择器;
-   这里只保留排序浮层的差异项。 */
-.home-sort-panel {
-  right: 0;
-  min-width: 180px;
-  /* 移动端不超出视口 */
-  max-width: min(260px, calc(100vw - 32px));
-}
-
-.home-sort-item {
-  gap: 8px;
-}
-
-.home-sort-item-label {
-  flex: 1 1 auto;
-}
-
-.home-sort-item svg {
-  display: block;
-  flex: none;
-}
-
-.home-sort-item[data-active="true"] svg {
-  color: var(--accent-500);
 }
 
 @media (min-width: 1024px) {
