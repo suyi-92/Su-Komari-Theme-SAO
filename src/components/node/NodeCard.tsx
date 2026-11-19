@@ -1,4 +1,4 @@
-import { memo, useCallback, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { memo, useCallback, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import {
   Cpu,
   Gauge,
@@ -19,7 +19,7 @@ import { useNodeCardModel } from "@/hooks/useNodeCardModel";
 import { usePreferences } from "@/hooks/usePreferences";
 import { useMetricColorsVersion } from "@/hooks/useMetricColors";
 import { useThemeSettings } from "@/hooks/useThemeSettings";
-import { formatBytes } from "@/utils/format";
+import { formatBytes, formatCompactNumber } from "@/utils/format";
 import { HOMEPAGE_MULTI_PING_MIN_COUNT } from "@/utils/pingTasks";
 import {
   buildTrafficQuotaSegmentColors,
@@ -54,9 +54,11 @@ type DisplayTag = { label: string; color: string };
 
 export const NodeCard = memo(function NodeCard({
   uuid,
+  variant = "large",
   showTodayTraffic = true,
 }: {
   uuid: string;
+  variant?: "large" | "medium";
   showTodayTraffic?: boolean;
 }) {
   const { resolvedAppearance } = usePreferences();
@@ -69,12 +71,13 @@ export const NodeCard = memo(function NodeCard({
     [themeSettings.trafficSpectrumColors],
   );
   const model = useNodeCardModel(uuid, { includeMultiPing: true });
+  const isMedium = variant === "medium";
 
   if (!model.node) {
     return (
       <div
-        className="server-card animate-pulse"
-        style={{ minHeight: 438 }}
+        className={clsx("server-card animate-pulse", isMedium && "is-medium")}
+        style={{ minHeight: isMedium ? 340 : 438 }}
         aria-busy
       />
     );
@@ -109,121 +112,54 @@ export const NodeCard = memo(function NodeCard({
   } = model;
   const showConnections = themeSettings.isReady && themeSettings.showConnections;
   const isLayered = themeSettings.serverCardTemplate === "layered";
+  const healthSection = homepagePingLines.length >= HOMEPAGE_MULTI_PING_MIN_COUNT ? (
+    <MultiPingStatus
+      lines={homepagePingLines}
+      latencyThresholds={latencyThresholds}
+      density="large"
+      className={clsx("card-metric-section", isLayered && "layered-multi-ping")}
+    />
+  ) : (
+    <NodeHealthSection
+      ping={ping}
+      pingBuckets={pingBuckets}
+      redrawKey={redrawKey}
+      hasRealHomepagePingBinding={hasRealHomepagePingBinding}
+      shouldRenderPingBars={shouldRenderPingBars}
+      pingLoading={pingLoading}
+      pingError={pingError}
+      latencyThresholds={latencyThresholds}
+      latencyColor={latencyColor}
+      lossColor={lossColor}
+    />
+  );
+  const cardContent = (
+    <div className="server-card-content">
+      <NodeCardHeader
+        node={node}
+        subtitle={subtitle}
+        osName={osName}
+        showTodayTraffic={showTodayTraffic}
+      />
 
-  if (isLayered) {
-    return (
-      <article
-        id={`node-card-${uuid}`}
-        className={clsx("server-card is-layered", isOffline && "is-offline")}
-      >
-        <div className="server-card-layered-top">
-          <div className="server-card-content">
-            <NodeCardHeader
-              node={node}
-              subtitle={subtitle}
-              osName={osName}
-              showTodayTraffic={showTodayTraffic}
-            />
-
-            <div className="server-card-stack">
-              <NodeMetricSection
-                node={node}
-                loadFraction={loadFraction}
-                redrawKey={redrawKey}
-              />
-
-              <NodeTrafficSection
-                node={node}
-                upRate={upRate}
-                downRate={downRate}
-                trafficTrend={trafficTrend}
-                isOnline={isOnline}
-                redrawKey={redrawKey}
-              />
-
-              <NodeTrafficQuota
-                litCount={trafficQuotaLitCount(traffic.fraction)}
-                remainingLabel={traffic.remainingLabel}
-                detail={traffic.detail}
-                typeLabel={traffic.typeLabel}
-                segmentColors={trafficSegmentColors}
-              />
-
-              {showConnections && (
-                <div className="card-metric-section server-card-meta-grid">
-                  <FooterStat
-                    icon={<Network size={13} strokeWidth={2} />}
-                    label="TCP 连接"
-                    value={node.connectionsTcp.toLocaleString()}
-                    color="var(--connection-color, var(--progress-network))"
-                  />
-                  <FooterStat
-                    icon={<Network size={13} strokeWidth={2} />}
-                    label="UDP 连接"
-                    value={node.connectionsUdp.toLocaleString()}
-                    color="var(--connection-color, var(--progress-network))"
-                  />
-                </div>
-              )}
-            </div>
-
-            <NodeCardFooter
-              expire={expire}
-              expireColor={expireColor}
-              uptime={uptime}
-              footerTags={footerTags}
-              renewalPrice={renewalPrice}
-            />
-          </div>
-        </div>
-
-        <div className="server-card-layered-bottom">
-          {homepagePingLines.length >= HOMEPAGE_MULTI_PING_MIN_COUNT ? (
-            <MultiPingStatus
-              lines={homepagePingLines}
-              latencyThresholds={latencyThresholds}
-              density="large"
-              className="card-metric-section layered-multi-ping"
-            />
-          ) : (
-            <NodeHealthSection
-              ping={ping}
-              pingBuckets={pingBuckets}
-              redrawKey={redrawKey}
-              hasRealHomepagePingBinding={hasRealHomepagePingBinding}
-              shouldRenderPingBars={shouldRenderPingBars}
-              pingLoading={pingLoading}
-              pingError={pingError}
-              latencyThresholds={latencyThresholds}
-              latencyColor={latencyColor}
-              lossColor={lossColor}
-            />
-          )}
-        </div>
-      </article>
-    );
-  }
-
-  return (
-    <article
-      id={`node-card-${uuid}`}
-      className={clsx("server-card", isOffline && "is-offline")}
-    >
-      <div className="server-card-content">
-        <NodeCardHeader
+      <div className="server-card-stack">
+        <NodeMetricSection
           node={node}
-          subtitle={subtitle}
-          osName={osName}
-          showTodayTraffic={showTodayTraffic}
+          loadFraction={loadFraction}
+          redrawKey={redrawKey}
         />
 
-        <div className="server-card-stack">
-          <NodeMetricSection
+        {isMedium ? (
+          <NodeCardMediumSummary
             node={node}
-            loadFraction={loadFraction}
-            redrawKey={redrawKey}
+            upRate={upRate}
+            downRate={downRate}
+            uptime={uptime}
+            expire={expire}
+            expireColor={expireColor}
+            showConnections={showConnections}
           />
-
+        ) : (
           <NodeTrafficSection
             node={node}
             upRate={upRate}
@@ -232,63 +168,61 @@ export const NodeCard = memo(function NodeCard({
             isOnline={isOnline}
             redrawKey={redrawKey}
           />
+        )}
 
-          <NodeTrafficQuota
-            litCount={trafficQuotaLitCount(traffic.fraction)}
-            remainingLabel={traffic.remainingLabel}
-            detail={traffic.detail}
-            typeLabel={traffic.typeLabel}
-            segmentColors={trafficSegmentColors}
-          />
-
-          {showConnections && (
-            <div className="card-metric-section server-card-meta-grid">
-              <FooterStat
-                icon={<Network size={13} strokeWidth={2} />}
-                label="TCP 连接"
-                value={node.connectionsTcp.toLocaleString()}
-                color="var(--connection-color, var(--progress-network))"
-              />
-              <FooterStat
-                icon={<Network size={13} strokeWidth={2} />}
-                label="UDP 连接"
-                value={node.connectionsUdp.toLocaleString()}
-                color="var(--connection-color, var(--progress-network))"
-              />
-            </div>
-          )}
-
-          {homepagePingLines.length >= HOMEPAGE_MULTI_PING_MIN_COUNT ? (
-            <MultiPingStatus
-              lines={homepagePingLines}
-              latencyThresholds={latencyThresholds}
-              density="large"
-              className="card-metric-section"
-            />
-          ) : (
-            <NodeHealthSection
-              ping={ping}
-              pingBuckets={pingBuckets}
-              redrawKey={redrawKey}
-              hasRealHomepagePingBinding={hasRealHomepagePingBinding}
-              shouldRenderPingBars={shouldRenderPingBars}
-              pingLoading={pingLoading}
-              pingError={pingError}
-              latencyThresholds={latencyThresholds}
-              latencyColor={latencyColor}
-              lossColor={lossColor}
-            />
-          )}
-        </div>
-
-        <NodeCardFooter
-          expire={expire}
-          expireColor={expireColor}
-          uptime={uptime}
-          footerTags={footerTags}
-          renewalPrice={renewalPrice}
+        <NodeTrafficQuota
+          litCount={trafficQuotaLitCount(traffic.fraction)}
+          remainingLabel={traffic.remainingLabel}
+          detail={traffic.detail}
+          typeLabel={traffic.typeLabel}
+          segmentColors={trafficSegmentColors}
         />
+
+        {!isMedium && showConnections && (
+          <div className="card-metric-section server-card-meta-grid">
+            <FooterStat
+              icon={<Network size={13} strokeWidth={2} />}
+              label="TCP 连接"
+              value={node.connectionsTcp.toLocaleString()}
+              color="var(--connection-color, var(--progress-network))"
+            />
+            <FooterStat
+              icon={<Network size={13} strokeWidth={2} />}
+              label="UDP 连接"
+              value={node.connectionsUdp.toLocaleString()}
+              color="var(--connection-color, var(--progress-network))"
+            />
+          </div>
+        )}
+
+        {!isLayered && !isMedium && healthSection}
       </div>
+
+      <NodeCardFooter
+        expire={expire}
+        expireColor={expireColor}
+        uptime={uptime}
+        footerTags={footerTags}
+        renewalPrice={renewalPrice}
+        showStats={!isMedium}
+      />
+      {!isLayered && isMedium && (
+        <div className="server-card-medium-health">{healthSection}</div>
+      )}
+    </div>
+  );
+
+  return (
+    <article
+      id={`node-card-${uuid}`}
+      className={clsx("server-card", isLayered && "is-layered", isMedium && "is-medium", isOffline && "is-offline")}
+    >
+      {isLayered ? (
+        <>
+          <div className="server-card-layered-top">{cardContent}</div>
+          <div className="server-card-layered-bottom">{healthSection}</div>
+        </>
+      ) : cardContent}
     </article>
   );
 });
@@ -438,6 +372,103 @@ function NodeTrafficSection({
         color="var(--traffic-down)"
         icon={<ArrowDown size={15} strokeWidth={2.4} />}
       />
+    </div>
+  );
+}
+
+function NodeCardMediumSummary({
+  node,
+  upRate,
+  downRate,
+  uptime,
+  expire,
+  expireColor,
+  showConnections,
+}: {
+  node: NodeCardNode;
+  upRate: ByteRateDisplay;
+  downRate: ByteRateDisplay;
+  uptime: DisplayStat;
+  expire: DisplayStat;
+  expireColor: string;
+  showConnections: boolean;
+}) {
+  const [upTotal, upUnit] = formatBytes(node.trafficUp).split(" ");
+  const [downTotal, downUnit] = formatBytes(node.trafficDown).split(" ");
+  const connectionColor = "var(--connection-color, var(--progress-network))";
+
+  return (
+    <div className="card-metric-section server-card-medium-summary">
+      <div className="server-card-medium-strip" data-connections={showConnections}>
+        <dl className="server-card-medium-group" aria-label="实时速率">
+          <MediumStat
+            label="上行"
+            icon={<ArrowUp size={11} strokeWidth={2.4} color="var(--traffic-up)" aria-hidden />}
+            {...upRate}
+            color={speedRateColor(upRate.unit)}
+          />
+          <MediumStat
+            label="下行"
+            icon={<ArrowDown size={11} strokeWidth={2.4} color="var(--traffic-down)" aria-hidden />}
+            {...downRate}
+            color={speedRateColor(downRate.unit)}
+          />
+        </dl>
+        <dl className="server-card-medium-group" aria-label="累计流量">
+          <MediumStat label="出站" value={upTotal} unit={upUnit} />
+          <MediumStat label="入站" value={downTotal} unit={downUnit} />
+        </dl>
+        {showConnections && (
+          <dl className="server-card-medium-group" aria-label="连接数">
+            <MediumStat
+              label="TCP"
+              value={formatCompactNumber(node.connectionsTcp)}
+              title={node.connectionsTcp.toLocaleString()}
+              color={connectionColor}
+            />
+            <MediumStat
+              label="UDP"
+              value={formatCompactNumber(node.connectionsUdp)}
+              title={node.connectionsUdp.toLocaleString()}
+              color={connectionColor}
+            />
+          </dl>
+        )}
+        <dl className="server-card-medium-group" aria-label="在线与到期">
+          <MediumStat label="在线" {...uptime} color="var(--progress-cpu)" />
+          <MediumStat label="到期" value={expire.value} unit={expire.unit} color={expireColor} />
+        </dl>
+      </div>
+    </div>
+  );
+}
+
+function MediumStat({
+  label,
+  value,
+  unit,
+  color,
+  icon,
+  title,
+}: {
+  label: string;
+  value: string;
+  unit?: string;
+  color?: string;
+  icon?: ReactNode;
+  title?: string;
+}) {
+  return (
+    <div className="server-card-medium-stat">
+      <dt>{icon}{label}</dt>
+      <dd
+        className="tabular"
+        style={color ? { "--medium-stat-color": color } as CSSProperties : undefined}
+        title={title}
+      >
+        {value}
+        {unit && <span className="server-card-medium-unit">{" "}{unit}</span>}
+      </dd>
     </div>
   );
 }
@@ -698,12 +729,14 @@ function NodeCardFooter({
   uptime,
   footerTags,
   renewalPrice,
+  showStats,
 }: {
   expire: DisplayStat;
   expireColor: string;
   uptime: DisplayStat;
   footerTags: DisplayTag[];
   renewalPrice: string | null;
+  showStats: boolean;
 }) {
   const rowRef = useRef<HTMLDivElement>(null);
   const measureRef = useRef<HTMLDivElement>(null);
@@ -769,25 +802,30 @@ function NodeCardFooter({
     };
   }, [footerTags, renewalPrice]);
 
+  const showTags = footerTags.length > 0 || Boolean(renewalPrice);
+  if (!showStats && !showTags) return null;
+
   return (
     <div className="server-card-footer">
-      <div className="server-card-meta-grid">
-        <FooterStat
-          icon={<RefreshCw size={13} strokeWidth={2} />}
-          label="在线"
-          value={uptime.value}
-          unit={uptime.unit}
-          color="var(--progress-cpu)"
-        />
-        <FooterStat
-          icon={<Calendar size={13} strokeWidth={2} />}
-          label="到期"
-          value={expire.value}
-          unit={expire.unit}
-          color={expireColor}
-        />
-      </div>
-      {(footerTags.length > 0 || renewalPrice) && (
+      {showStats && (
+        <div className="server-card-meta-grid">
+          <FooterStat
+            icon={<RefreshCw size={13} strokeWidth={2} />}
+            label="在线"
+            value={uptime.value}
+            unit={uptime.unit}
+            color="var(--progress-cpu)"
+          />
+          <FooterStat
+            icon={<Calendar size={13} strokeWidth={2} />}
+            label="到期"
+            value={expire.value}
+            unit={expire.unit}
+            color={expireColor}
+          />
+        </div>
+      )}
+      {showTags && (
         <>
           <div className="dstatus-tags-row" ref={rowRef} title={footerTags.length > 0 ? tagTitle : undefined}>
             {visibleTags.map((tag, index) => (

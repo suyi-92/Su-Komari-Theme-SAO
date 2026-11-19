@@ -79,6 +79,7 @@ import { DiaTextReveal } from "@/components/ui/DiaTextReveal";
 // 卡片视图网格密度；列表档由独立组件布局。
 const GRID_LAYOUT: Record<NodeViewMode, { className: string; minColumnWidth: number }> = {
   large: { className: "grid gap-4 xl:gap-5", minColumnWidth: 360 },
+  medium: { className: "grid gap-3 xl:gap-4", minColumnWidth: 360 },
   compact: { className: "grid gap-3 xl:gap-4", minColumnWidth: 340 },
   mini: { className: "grid gap-3 xl:gap-3.5", minColumnWidth: 260 },
   // 占位以满足 Record 穷尽。
@@ -1126,6 +1127,7 @@ export function NodeGrid() {
             ) : (
               <NodeCard
                 uuid={uuid}
+                variant={mode}
                 showTodayTraffic={showTrafficPopover}
               />
             )}

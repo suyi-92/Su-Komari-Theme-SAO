@@ -73,6 +73,17 @@ describe("normalizeThemeSettings", () => {
     );
   });
 
+  it("round-trips medium as the desktop and mobile default node view", () => {
+    const draft = draftFromSettings(normalizeThemeSettings({
+      desktopNodeViewMode: "medium",
+      mobileNodeViewMode: "medium",
+    }));
+    expect(draftToThemeSettings(draft)).toMatchObject({
+      desktopNodeViewMode: "medium",
+      mobileNodeViewMode: "medium",
+    });
+  });
+
   it("normalizes overviewMicroVisualMode defaulting to dynamic and accepting static", () => {
     expect(normalizeThemeSettings({}).overviewMicroVisualMode).toBe("dynamic");
     expect(normalizeThemeSettings({ overviewMicroVisualMode: "static" }).overviewMicroVisualMode).toBe("static");

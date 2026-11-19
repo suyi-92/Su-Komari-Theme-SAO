@@ -28,6 +28,10 @@
   contain-intrinsic-size: auto 438px;
 }
 
+.server-card.is-medium {
+  contain-intrinsic-size: auto 340px;
+}
+
 .server-card::before,
 .compact-node-card::before,
 .mini-node-card::before {
@@ -460,6 +464,127 @@
   flex: 1;
   min-width: 0;
   border-radius: 2px;
+}
+
+.server-card.is-medium .server-card-stack {
+  container: medium-card / inline-size;
+}
+
+.server-card-medium-strip {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1.04fr) minmax(0, 0.9fr) minmax(0, 1fr);
+  gap: 14px;
+}
+
+.server-card-medium-strip[data-connections="false"] {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.server-card-medium-group {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  min-width: 0;
+  margin: 0;
+}
+
+.server-card-medium-stat {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 3px;
+  min-width: 0;
+  line-height: 1.35;
+}
+
+.server-card-medium-stat dt {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 560;
+  white-space: nowrap;
+}
+
+.server-card-medium-stat dd {
+  min-width: 0;
+  margin: 0;
+  color: var(--medium-stat-color, var(--text-primary));
+  color: color-mix(in srgb, var(--medium-stat-color, var(--text-primary)) 76%, var(--text-primary));
+  font-size: 13px;
+  font-weight: 680;
+  line-height: 1.35;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.server-card-medium-unit {
+  color: var(--text-tertiary);
+  font-size: 9px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.server-card-medium-health {
+  border-top: 1px solid var(--hairline);
+  padding-top: 12px;
+}
+
+@container medium-card (max-width: 385px) {
+  .server-card-medium-strip {
+    gap: 9px;
+  }
+
+  .server-card-medium-stat dd {
+    font-size: 12px;
+  }
+}
+
+@container medium-card (320px < width <= 360px) {
+  .server-card-medium-strip[data-connections="true"] dt svg {
+    display: none;
+  }
+}
+
+@container medium-card (max-width: 320px) {
+  .server-card-medium-stat {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+  }
+
+  .server-card-medium-stat dt {
+    font-size: 10px;
+  }
+
+  .server-card-medium-stat dd {
+    text-align: left;
+  }
+
+  .server-metric-grid {
+    column-gap: 12px;
+  }
+
+  .server-metric-grid .metric-item > :first-child {
+    gap: 4px;
+  }
+
+  .traffic-quota-head {
+    flex-wrap: wrap;
+    gap: 4px 6px;
+  }
+
+  .traffic-quota-label {
+    gap: 4px;
+    min-width: max-content;
+    white-space: nowrap;
+  }
+
+  .traffic-quota-usage {
+    margin-left: auto;
+  }
 }
 
 .server-health-grid {

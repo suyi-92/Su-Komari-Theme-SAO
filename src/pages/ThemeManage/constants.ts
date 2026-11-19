@@ -6,6 +6,7 @@ import {
   Server,
   Sliders,
   Square,
+  Rows2,
   LayoutGrid,
   Grid3x3,
   List,
@@ -203,6 +204,7 @@ export const TRAFFIC_SPECTRUM_ANCHOR_CONFIG = [
 
 export const NODE_VIEW_MODE_OPTIONS = [
   { value: "large", label: "大卡片", icon: Square },
+  { value: "medium", label: "中卡片", icon: Rows2 },
   { value: "compact", label: "小卡片", icon: LayoutGrid },
   { value: "mini", label: "迷你卡片", icon: Grid3x3 },
   { value: "list", label: "列表", icon: List },

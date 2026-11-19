@@ -35,7 +35,7 @@ import {
 } from "@/utils/pingTasks";
 
 export type Appearance = NonNullable<ThemeSettings["defaultAppearance"]>;
-export type NodeViewMode = "large" | "compact" | "mini" | "list";
+export type NodeViewMode = NonNullable<ThemeSettings["desktopNodeViewMode"]>;
 export type ServerCardTemplate = "classic" | "layered";
 export const SERVER_CARD_TEMPLATES: readonly ServerCardTemplate[] = [
   "classic",
@@ -400,7 +400,8 @@ function normalizeAppearance(
 }
 
 export function isNodeViewMode(value: unknown): value is NodeViewMode {
-  return value === "large" || value === "compact" || value === "mini" || value === "list";
+  return value === "large" || value === "medium" || value === "compact" ||
+    value === "mini" || value === "list";
 }
 
 function normalizeNodeViewMode(

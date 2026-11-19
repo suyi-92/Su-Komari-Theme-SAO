@@ -9,6 +9,7 @@ import {
   LayoutGrid,
   List,
   Palette,
+  Rows2,
   Settings,
   SlidersHorizontal,
   Square,
@@ -33,6 +34,7 @@ const MetricColorPicker = lazy(() =>
 // 与 ThemeManage 里 NODE_VIEW_MODE_OPTIONS 的图标语义保持一致。
 const VIEW_MODE_META: Record<NodeViewMode, { icon: typeof Square; label: string }> = {
   large: { icon: Square, label: "大视图" },
+  medium: { icon: Rows2, label: "中视图" },
   compact: { icon: LayoutGrid, label: "小视图" },
   mini: { icon: Grid3x3, label: "迷你视图" },
   list: { icon: List, label: "列表视图" },

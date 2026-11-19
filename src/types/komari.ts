@@ -195,8 +195,8 @@ export type ServerCardTemplate = "classic" | "layered";
 export interface ThemeSettings {
   [key: string]: unknown;
   defaultAppearance?: "system" | "light" | "dark" | "white";
-  desktopNodeViewMode?: "large" | "compact" | "mini" | "list";
-  mobileNodeViewMode?: "large" | "compact" | "mini" | "list";
+  desktopNodeViewMode?: "large" | "medium" | "compact" | "mini" | "list";
+  mobileNodeViewMode?: "large" | "medium" | "compact" | "mini" | "list";
   serverCardTemplate?: ServerCardTemplate;
   enableAdminButton?: boolean;
   showPingChart?: boolean;
