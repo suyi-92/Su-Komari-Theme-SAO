@@ -100,7 +100,7 @@ const MetricQueryResponseSchema = z
 const PingMetricStatSchema = z
   .object({
     entity_id: z.string().default(""),
-    task_id: z.union([z.string(), z.number()]),
+    task_id: z.union([z.string(), z.number()]).nullish(),
     name: z.string().default(""),
     type: z.string().default("icmp"),
     interval: z.number().default(60),
@@ -638,40 +638,6 @@ async function queryPingMetricStatsPayload(
 ): Promise<z.output<typeof PingMetricStatsResponseSchema> | null> {
   const deadline = requestDeadline(options?.timeout);
 
-  if (typeof window !== "undefined" && !options?.signal?.aborted) {
-    const earlyObj = (
-      window as unknown as {
-        __EARLY_DATA__?: {
-          yesterday_ping?: Promise<unknown> | null;
-        };
-      }
-    ).__EARLY_DATA__;
-
-    if (earlyObj?.yesterday_ping) {
-      const earlyPromise = earlyObj.yesterday_ping;
-      earlyObj.yesterday_ping = null;
-      try {
-        const json = await waitForSharedRequest(
-          earlyPromise,
-          options?.signal,
-          remainingRequestTimeout(deadline),
-        );
-        if (options?.signal?.aborted) {
-          throw new DOMException("The operation was aborted.", "AbortError");
-        }
-        if (json && typeof json === "object" && "result" in json) {
-          const parsed = PingMetricStatsResponseSchema.safeParse((json as { result: unknown }).result);
-          if (parsed.success) {
-            pingMetricStatsApiAvailable = true;
-            return parsed.data;
-          }
-        }
-      } catch (err) {
-        if (options?.signal?.aborted) throw err;
-      }
-    }
-  }
-
   const metricQueryAvailable = await waitForMetricQueryCapability({
     signal: options?.signal,
     timeout: remainingRequestTimeout(deadline),
@@ -842,8 +808,8 @@ function normalizePingMetricStats(
 ): PingTaskStats[] {
   const out: PingTaskStats[] = [];
   for (const item of payload.stats) {
-    const taskId = Number.parseInt(String(item.task_id), 10);
-    if (!Number.isFinite(taskId) || taskId <= 0 || !item.entity_id) continue;
+    const taskId = Number(item.task_id);
+    if (!Number.isInteger(taskId) || taskId <= 0 || !item.entity_id) continue;
     out.push({
       client: item.entity_id,
       taskId,

@@ -258,7 +258,7 @@ export function HelpTab({
                 <ul className="list-disc pl-4 space-y-0.5">
                   <li><strong>三网综合（默认）</strong>：参评节点必须同时拥有电信 (CT)、联通 (CU)、移动 (CM) 的测速数据，比拼全能稳定性。</li>
                   <li><strong>单运营商（电信 / 联通 / 移动）</strong>：仅统计指定运营商的线路质量，专线专用，比拼单一路线品质。</li>
-                  <li><strong>全量统计</strong>：汇总参评节点有统计数据的全部公开 Ping 任务，包括教育网等未归入三网的线路。</li>
+                  <li><strong>全量统计</strong>：汇总所选协议范围内有统计数据的全部公开 Ping 任务，包括教育网等未归入三网的线路。</li>
                 </ul>
                 <p className="text-amber-600/90 dark:text-amber-400/90 font-medium pt-0.5">
                   🛡️ 缺考防刷机制：在「三网综合」模式下，若某节点未配齐三网线路（如缺少移动），系统会自动判定为<strong>「未配齐三网 (缺考)」</strong>，并在天梯榜醒目标注。缺考节点无法参评总冠军与前三名徽章，杜绝少配烂线刷高分的情况。
@@ -273,7 +273,10 @@ export function HelpTab({
               </div>
               <div className="text-(--text-secondary) leading-relaxed space-y-1.5 text-[10.5px]">
                 <p>
-                  稳定评分使用最近 24 小时的公开 Ping 任务统计。三网和单运营商赛道按任务名归类（不区分大小写），同一运营商的 IPv4 和 IPv6 任务都可参评，首页选来展示的线路不会改变计分范围。
+                  稳定评分使用最近 24 小时的公开 Ping 任务统计。默认仅 IPv4 参与评分，开启「IPv6 参与评分」后，当前赛道也会计入 IPv6 任务。三网和单运营商赛道按任务名归类（不区分大小写），首页展示线路独立配置。
+                </p>
+                <p>
+                  部分 Komari 版本的公开接口只提供任务名称等基础信息。请在 IPv6 任务名中加上 <code>IPv6</code> 或 <code>V6</code>（如「电信-IPv6」）。无法识别协议的任务按 IPv4 计入。
                 </p>
                 <div className="rounded-lg bg-[color-mix(in_srgb,var(--bg-card)_90%,transparent)] p-2 border border-(--hairline) font-mono text-[10px] space-y-0.5">
                   <div>• 电信 (CT)：包含 <code>电信</code>、<code>中国电信</code>、<code>ct</code>、<code>chinatelecom</code></div>

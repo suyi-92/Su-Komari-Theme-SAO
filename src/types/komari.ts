@@ -258,6 +258,7 @@ export interface ThemeSettings {
   carrierLossIncludedNodes?: string[];
   yesterdayBestIncludedNodes?: string[];
   yesterdayBestScope?: YesterdayBestScope;
+  yesterdayBestIncludeIpv6?: boolean;
   yesterdayBestDisplayMode?: YesterdayBestDisplayMode;
   // 值支持旧版纯数字(自动升格)或 { amount, paidCny?, acquiredAt? } 条目,见 normalizeCostPremiums。
   costPremiums?: Record<

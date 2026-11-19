@@ -22,10 +22,16 @@ export interface CarrierLossConfigModalProps {
   groupOrder?: string[];
   title?: string;
   description?: string;
-  onSave: (includedUuids: string[], scope?: YesterdayBestScope, displayMode?: YesterdayBestDisplayMode) => void;
+  onSave: (
+    includedUuids: string[],
+    scope?: YesterdayBestScope,
+    displayMode?: YesterdayBestDisplayMode,
+    includeIpv6?: boolean,
+  ) => void;
   showScopeSelector?: boolean;
   scope?: YesterdayBestScope;
   displayMode?: YesterdayBestDisplayMode;
+  includeIpv6?: boolean;
 }
 
 export function CarrierLossConfigModal({
@@ -40,6 +46,7 @@ export function CarrierLossConfigModal({
   showScopeSelector = false,
   scope = "tri",
   displayMode = "best",
+  includeIpv6 = false,
 }: CarrierLossConfigModalProps) {
   // 内部维护一个选中的 UUID 集合
   // 语义约定：若数组为空，表示“全部参与统计”
@@ -52,6 +59,7 @@ export function CarrierLossConfigModal({
 
   const [selectedScope, setSelectedScope] = useState<YesterdayBestScope>(scope || "tri");
   const [selectedDisplayMode, setSelectedDisplayMode] = useState<YesterdayBestDisplayMode>(displayMode || "best");
+  const [selectedIncludeIpv6, setSelectedIncludeIpv6] = useState(includeIpv6);
   const [keyword, setKeyword] = useState("");
   const [selectedGroup, setSelectedGroup] = useState<string>("__all__");
 
@@ -76,8 +84,9 @@ export function CarrierLossConfigModal({
       setSelectedGroup("__all__");
       setSelectedScope(scope || "tri");
       setSelectedDisplayMode(displayMode || "best");
+      setSelectedIncludeIpv6(includeIpv6);
     }
-  }, [isOpen, includedNodeUuids, allNodes, scope, displayMode]);
+  }, [isOpen, includedNodeUuids, allNodes, scope, displayMode, includeIpv6]);
 
   // ESC 键关闭弹窗
   useEffect(() => {
@@ -173,6 +182,7 @@ export function CarrierLossConfigModal({
       finalUuids,
       showScopeSelector ? selectedScope : undefined,
       showScopeSelector ? selectedDisplayMode : undefined,
+      showScopeSelector ? selectedIncludeIpv6 : undefined,
     );
     onClose();
   };
@@ -284,6 +294,21 @@ export function CarrierLossConfigModal({
                 })}
               </div>
             </div>
+
+            <label className="flex cursor-pointer items-center justify-between gap-2 border-t border-(--hairline)/60 pt-1.5">
+              <span className="text-xs font-semibold text-(--text-primary)">IPv6 参与评分</span>
+              <span className="flex items-center gap-2 text-[10px] text-(--text-muted)">
+                {selectedIncludeIpv6 ? "IPv4 与 IPv6" : "仅 IPv4"}
+                <input
+                  type="checkbox"
+                  role="switch"
+                  aria-label="IPv6 参与评分"
+                  checked={selectedIncludeIpv6}
+                  onChange={(event) => setSelectedIncludeIpv6(event.target.checked)}
+                  className="h-4 w-4 shrink-0 cursor-pointer accent-(--accent-500)"
+                />
+              </span>
+            </label>
 
             {/* 2. 首页卡片展现指标：紧凑并排 */}
             <div className="pt-1.5 border-t border-(--hairline)/60 space-y-1.5">

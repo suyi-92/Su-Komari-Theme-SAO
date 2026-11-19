@@ -16,18 +16,13 @@ import {
   useNodeStoreStatus,
 } from "@/hooks/useNode";
 import { useHomepagePingOverview, useAllPingOverview } from "@/hooks/usePingOverview";
+import { useYesterdayBestLeaderboard } from "@/hooks/useYesterdayBestLeaderboard";
 import { calculateCarrierLoss, type CarrierLossSummary } from "@/utils/carrierLoss";
 import {
-  calculateYesterdayBestLeaderboard,
-  getMemoryYesterdayBestNode,
-  getMemoryYesterdayLeaderboard,
   calculateYesterdayAverageScore,
   getYesterdayBestDisplayCache,
   setYesterdayBestDisplayCache,
-  clearYesterdayBestDisplayCache,
   getYesterdayLeaderboardCache,
-  type YesterdayBestNodeResult,
-  type YesterdayLeaderboardItem,
 } from "@/utils/yesterdayBestNode";
 import { sortNodesByWeight } from "@/pages/ThemeManage/components/CarrierLossConfigModal";
 import { YesterdayBestLeaderboardModal } from "./YesterdayBestLeaderboardModal";
@@ -775,62 +770,28 @@ export function NodeGrid() {
     return candidateUuids;
   }, [sortedVisibleMeta, themeSettings.yesterdayBestIncludedNodes]);
 
-  // 昨日最佳服务器：从后台批量轻量拉取昨天自然日测速数据并计算
+  // 稳定评分使用最近 24 小时的公开任务统计。
   const yesterdayScope = themeSettings.yesterdayBestScope ?? "tri";
-
-  const [yesterdayBestResult, setYesterdayBestResult] = useState<YesterdayBestNodeResult | null>(() => {
-    const memory = getMemoryYesterdayBestNode(yesterdayCandidateUuids, yesterdayScope);
-    return memory !== undefined ? memory : null;
-  });
-
-  const [yesterdayLeaderboard, setYesterdayLeaderboard] = useState<YesterdayLeaderboardItem[]>(() => {
-    return getMemoryYesterdayLeaderboard(yesterdayCandidateUuids, yesterdayScope) ?? getYesterdayLeaderboardCache(yesterdayScope) ?? [];
-  });
+  const yesterdayIncludeIpv6 = themeSettings.yesterdayBestIncludeIpv6;
+  const yesterdayScoreEnabled = themeSettings.isReady && themeSettings.overviewCards.includes("yesterdayBest");
+  const yesterdayScore = useYesterdayBestLeaderboard(
+    yesterdayCandidateUuids, yesterdayScope, yesterdayIncludeIpv6, yesterdayScoreEnabled,
+  );
+  const yesterdayBestResult = yesterdayScore?.best;
+  const yesterdayLeaderboard = useMemo(() => {
+    if (!yesterdayScoreEnabled || yesterdayCandidateUuids.length === 0) return [];
+    return yesterdayScore?.leaderboard ?? getYesterdayLeaderboardCache(
+      yesterdayScope, undefined, yesterdayIncludeIpv6, yesterdayCandidateUuids,
+    ) ?? [];
+  }, [yesterdayScore, yesterdayScoreEnabled, yesterdayCandidateUuids, yesterdayScope, yesterdayIncludeIpv6]);
   const [isLeaderboardModalOpen, setIsLeaderboardModalOpen] = useState(false);
-
-  useEffect(() => {
-    if (!themeSettings.isReady) return;
-    const isYesterdayCardEnabled = (themeSettings.overviewCards ?? []).includes("yesterdayBest");
-    if (!isYesterdayCardEnabled) return;
-
-    if (yesterdayCandidateUuids.length === 0) {
-      setYesterdayBestResult(null);
-      setYesterdayLeaderboard([]);
-      clearYesterdayBestDisplayCache(yesterdayScope);
-      return;
-    }
-
-    // 若内存已有当前候选集结果，直接复用避免闪烁
-    const cachedBest = getMemoryYesterdayBestNode(yesterdayCandidateUuids, yesterdayScope);
-    const cachedBoard = getMemoryYesterdayLeaderboard(yesterdayCandidateUuids, yesterdayScope);
-    if (cachedBest !== undefined && cachedBoard !== undefined) {
-      setYesterdayBestResult(cachedBest);
-      setYesterdayLeaderboard(cachedBoard);
-      return;
-    }
-
-    let active = true;
-    calculateYesterdayBestLeaderboard(yesterdayCandidateUuids, { scope: yesterdayScope }).then((res) => {
-      if (active) {
-        setYesterdayBestResult(res.best);
-        setYesterdayLeaderboard(res.leaderboard);
-      }
-    });
-
-    return () => {
-      active = false;
-    };
-  }, [
-    themeSettings.isReady,
-    themeSettings.overviewCards,
-    yesterdayCandidateUuids,
-    yesterdayScope,
-  ]);
 
   // 将最佳或平均分映射为卡片展示数据
   const yesterdayDisplayMode = themeSettings.yesterdayBestDisplayMode ?? "best";
 
   const yesterdayBestDisplay = useMemo(() => {
+    if (!yesterdayScoreEnabled || yesterdayCandidateUuids.length === 0) return null;
+
     // 1. 集群平均分模式：计算所有合格/参评节点的综合平均分数
     if (yesterdayDisplayMode === "average") {
       const avgResult = calculateYesterdayAverageScore(yesterdayLeaderboard);
@@ -845,7 +806,6 @@ export function NodeGrid() {
           mode: yesterdayDisplayMode,
           sampleCount: avgResult.nodeCount,
         };
-        setYesterdayBestDisplayCache(displayInfo, yesterdayCandidateUuids, yesterdayScope);
         return displayInfo;
       }
     }
@@ -853,9 +813,9 @@ export function NodeGrid() {
     // 2. 标杆最佳节点模式（默认）：展示第 1 名冠军机器
     if (!yesterdayBestResult) {
       // 首帧直接读取本地持久化展示缓存，校验候选集一致性，彻底消除开屏 200ms 的空白/占位符闪烁
-      const cached = getYesterdayBestDisplayCache(yesterdayCandidateUuids, yesterdayScope);
-      if (cached) return cached;
-      return null;
+      return yesterdayScore === undefined ? getYesterdayBestDisplayCache(
+        yesterdayCandidateUuids, yesterdayScope, undefined, yesterdayIncludeIpv6, yesterdayDisplayMode,
+      ) : null;
     }
     const targetUuid = yesterdayBestResult.uuid;
     const targetIndex = sortedVisibleMeta.findIndex((n) => n.uuid === targetUuid);
@@ -871,9 +831,10 @@ export function NodeGrid() {
       scope: yesterdayScope,
       mode: yesterdayDisplayMode,
     };
-    setYesterdayBestDisplayCache(displayInfo, yesterdayCandidateUuids, yesterdayScope);
     return displayInfo;
   }, [
+    yesterdayScoreEnabled,
+    yesterdayScore,
     yesterdayBestResult,
     yesterdayLeaderboard,
     yesterdayDisplayMode,
@@ -881,7 +842,14 @@ export function NodeGrid() {
     nameByUuid,
     yesterdayCandidateUuids,
     yesterdayScope,
+    yesterdayIncludeIpv6,
   ]);
+
+  useEffect(() => {
+    if (yesterdayScore && yesterdayBestDisplay) {
+      setYesterdayBestDisplayCache(yesterdayBestDisplay, yesterdayCandidateUuids, yesterdayScope, undefined, yesterdayIncludeIpv6);
+    }
+  }, [yesterdayScore, yesterdayBestDisplay, yesterdayCandidateUuids, yesterdayScope, yesterdayIncludeIpv6]);
 
   const overview = useMemo<HomeOverview>(() => {
     let onlineNodes = 0;

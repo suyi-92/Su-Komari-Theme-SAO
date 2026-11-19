@@ -6,7 +6,7 @@ vi.mock("@/services/rpc2Client", () => ({
   getRpc2Client: () => ({ call: rpcCallMock }),
 }));
 
-import { getMe, getNodes, getPublic } from "@/services/api";
+import { getMe, getNodes, getPingOverviewStats, getPublic } from "@/services/api";
 
 type EarlyDataMap = Record<string, Promise<unknown> | null>;
 function getEarlyWindow(): { __EARLY_DATA__?: EarlyDataMap } {
@@ -93,6 +93,28 @@ describe("Early Data prefetch consumption", () => {
     expect(nodes[0].name).toBe("Node One");
     expect(getEarlyWindow().__EARLY_DATA__?.rpc_nodes).toBeNull();
     expect(rpcCallMock).not.toHaveBeenCalled();
+  });
+
+  it("uses the scoring request's 24h task and node selection even with obsolete ping prefetch data present", async () => {
+    getEarlyWindow().__EARLY_DATA__ = {
+      yesterday_ping: Promise.resolve({ result: { stats: [{ entity_id: "wrong-node", task_id: 1 }] } }),
+    };
+    rpcCallMock.mockImplementation((method: string) => Promise.resolve(
+      method === "public:getPingMetricStats" ? {
+        stats: [
+          { entity_id: "node-a", task_id: "42" },
+          { entity_id: "node-a", task_id: "42-other" },
+          { entity_id: "node-a" },
+        ],
+      } : {},
+    ));
+
+    const result = await getPingOverviewStats(24, [72, 42], { entityIds: ["node-a"] });
+
+    expect(result.map(({ client, taskId }) => [client, taskId])).toEqual([["node-a", 42]]);
+    expect(rpcCallMock).toHaveBeenCalledWith("public:getPingMetricStats", {
+      hours: 24, task_ids: [42, 72], entity_ids: ["node-a"], max_points: 24,
+    }, expect.anything());
   });
 
   it("consumes early today_traffic metrics without network roundtrip", async () => {

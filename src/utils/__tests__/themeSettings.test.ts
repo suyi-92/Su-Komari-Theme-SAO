@@ -1,7 +1,21 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_PING_LATENCY_THRESHOLDS, normalizeThemeSettings } from "@/utils/themeSettings";
+import { draftFromSettings, draftToThemeSettings } from "@/pages/ThemeManage/utils";
 
 describe("normalizeThemeSettings", () => {
+  it("defaults stability scoring to IPv4 and preserves explicit IPv6 choices when saving", () => {
+    expect(normalizeThemeSettings({ yesterdayBestScope: "all" })).toMatchObject({
+      yesterdayBestScope: "all",
+      yesterdayBestIncludeIpv6: false,
+    });
+
+    for (const includeIpv6 of [false, true]) {
+      const draft = draftFromSettings(normalizeThemeSettings({ yesterdayBestIncludeIpv6: includeIpv6 }));
+      expect(draft.yesterdayBestIncludeIpv6).toBe(includeIpv6);
+      expect(draftToThemeSettings(draft).yesterdayBestIncludeIpv6).toBe(includeIpv6);
+    }
+  });
+
   it("uses regional latency for legacy default thresholds and retains custom settings", () => {
     expect(normalizeThemeSettings({}).pingLatencyMode).toBe("regional");
     expect(normalizeThemeSettings({

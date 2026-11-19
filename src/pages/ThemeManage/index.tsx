@@ -7,6 +7,7 @@ import type { OverviewData } from "@/components/node/OverviewStatCard";
 import type { HourlyTrafficBucket } from "@/utils/trafficStats";
 import { useHomeNodeSummaries } from "@/hooks/useNode";
 import { useAllPingOverview } from "@/hooks/usePingOverview";
+import { useYesterdayBestLeaderboard } from "@/hooks/useYesterdayBestLeaderboard";
 import { calculateCarrierLoss, type CarrierLossSummary } from "@/utils/carrierLoss";
 import { usePublicConfig } from "@/hooks/usePublicConfig";
 import { useHourlyClock, useMinuteClock } from "@/hooks/useClock";
@@ -20,14 +21,7 @@ import {
   getAdminPingTasks,
   getNodes,
 } from "@/services/api";
-import {
-  calculateYesterdayBestLeaderboard,
-  getMemoryYesterdayBestNode,
-  getMemoryYesterdayLeaderboard,
-  calculateYesterdayAverageScore,
-  type YesterdayBestNodeResult,
-  type YesterdayLeaderboardItem,
-} from "@/utils/yesterdayBestNode";
+import { calculateYesterdayAverageScore } from "@/utils/yesterdayBestNode";
 import {
   calculateCostSummary,
   getExchangeRates,
@@ -431,45 +425,16 @@ function calculateSimulatedCarrierLoss(
   const yesterdayDisplayMode = draft.yesterdayBestDisplayMode ?? "best";
   const yesterdayCandidateUuids = useMemo(() => yesterdayCandidateNodes.map((n) => n.uuid), [yesterdayCandidateNodes]);
 
-  const [yesterdayBestResult, setYesterdayBestResult] = useState<YesterdayBestNodeResult | null>(() => {
-    const cached = getMemoryYesterdayBestNode(yesterdayCandidateUuids, yesterdayScope);
-    return cached !== undefined ? cached : null;
-  });
-  const [yesterdayLeaderboard, setYesterdayLeaderboard] = useState<YesterdayLeaderboardItem[]>(() => {
-    const cachedBoard = getMemoryYesterdayLeaderboard(yesterdayCandidateUuids, yesterdayScope);
-    return cachedBoard !== undefined ? cachedBoard : [];
-  });
-
-  useEffect(() => {
-    if (yesterdayCandidateUuids.length === 0) {
-      setYesterdayBestResult(null);
-      setYesterdayLeaderboard([]);
-      return;
-    }
-    const cachedBest = getMemoryYesterdayBestNode(yesterdayCandidateUuids, yesterdayScope);
-    const cachedBoard = getMemoryYesterdayLeaderboard(yesterdayCandidateUuids, yesterdayScope);
-    if (cachedBest !== undefined && cachedBoard !== undefined) {
-      setYesterdayBestResult(cachedBest);
-      setYesterdayLeaderboard(cachedBoard);
-      return;
-    }
-
-    let active = true;
-    calculateYesterdayBestLeaderboard(yesterdayCandidateUuids, { scope: yesterdayScope }).then((res) => {
-      if (active) {
-        setYesterdayBestResult(res.best);
-        setYesterdayLeaderboard(res.leaderboard);
-      }
-    });
-    return () => {
-      active = false;
-    };
-  }, [yesterdayCandidateUuids, yesterdayScope]);
+  const yesterdayScore = useYesterdayBestLeaderboard(
+    yesterdayCandidateUuids, yesterdayScope, draft.yesterdayBestIncludeIpv6,
+  );
+  const yesterdayBestResult = yesterdayScore?.best;
+  const yesterdayLeaderboard = yesterdayScore?.leaderboard;
 
   const yesterdayBestDisplay = useMemo(() => {
     if (yesterdayCandidateNodes.length === 0) return null;
 
-    if (yesterdayDisplayMode === "average") {
+    if (yesterdayDisplayMode === "average" && yesterdayLeaderboard) {
       const avgResult = calculateYesterdayAverageScore(yesterdayLeaderboard);
       if (avgResult) {
         return {

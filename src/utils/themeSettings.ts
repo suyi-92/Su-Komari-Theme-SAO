@@ -318,6 +318,7 @@ export interface ResolvedThemeSettings {
   carrierLossIncludedNodes: string[];
   yesterdayBestIncludedNodes: string[];
   yesterdayBestScope: YesterdayBestScope;
+  yesterdayBestIncludeIpv6: boolean;
   yesterdayBestDisplayMode: YesterdayBestDisplayMode;
   costPremiums: Record<string, CostPremiumEntry>;
   costRateApiUrl: string;
@@ -380,6 +381,7 @@ export const DEFAULT_THEME_SETTINGS: ResolvedThemeSettings = {
   carrierLossIncludedNodes: [],
   yesterdayBestIncludedNodes: [],
   yesterdayBestScope: "tri",
+  yesterdayBestIncludeIpv6: false,
   yesterdayBestDisplayMode: "best",
   costPremiums: {},
   costRateApiUrl: DEFAULT_COST_RATE_API_URL,
@@ -733,6 +735,7 @@ export function normalizeThemeSettings(
     carrierLossIncludedNodes: normalizeNodeIdentityList(settings?.carrierLossIncludedNodes),
     yesterdayBestIncludedNodes: normalizeNodeIdentityList(settings?.yesterdayBestIncludedNodes),
     yesterdayBestScope: normalizeYesterdayBestScope(settings?.yesterdayBestScope),
+    yesterdayBestIncludeIpv6: settings?.yesterdayBestIncludeIpv6 === true,
     yesterdayBestDisplayMode: normalizeYesterdayBestDisplayMode(settings?.yesterdayBestDisplayMode),
     costPremiums: normalizeCostPremiums(settings?.costPremiums),
     costRateApiUrl: normalizeCostRateApiUrl(settings?.costRateApiUrl),

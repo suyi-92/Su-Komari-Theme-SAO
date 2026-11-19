@@ -76,20 +76,11 @@
             const fiveMinutesMs = 5 * 60 * 1000;
             const maxPoints = Math.max(1, Math.ceil((now - queryStartMs) / fiveMinutesMs));
 
-            const yesterdayMs = todayStartMs - 24 * 60 * 60 * 1000;
-            const yesterdayElapsedMs = now - yesterdayMs;
-            const yesterdayQueryHours = Math.max(24, Math.ceil(yesterdayElapsedMs / (60 * 60 * 1000)));
-
             window.__EARLY_DATA__ = {
               public: fetch(base + "/api/public", opts).then((r) => (r.ok ? r.json() : null)).catch(() => null),
               me: fetch(base + "/api/me", opts).then((r) => (r.ok ? r.json() : null)).catch(() => null),
               nodes: fetch(base + "/api/nodes", opts).then((r) => (r.ok ? r.json() : null)).catch(() => null),
               rpc_nodes: rpcPost("common:getNodes"),
-              yesterday_ping: rpcPost("public:getPingMetricStats", {
-                hours: yesterdayQueryHours,
-                task_ids: [1, 2, 3],
-                max_points: 24,
-              }),
               today_traffic: {
                 startMs: queryStartMs,
                 promise: rpcPost("public:queryMetrics", {

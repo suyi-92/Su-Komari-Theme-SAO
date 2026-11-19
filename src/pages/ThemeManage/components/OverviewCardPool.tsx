@@ -16,7 +16,6 @@ import type { NodeInfo, OverviewCardId } from "@/types/komari";
 import type { HourlyTrafficBucket } from "@/utils/trafficStats";
 import { CarrierLossConfigModal } from "./CarrierLossConfigModal";
 import { AssetCurrencyConfigModal } from "./AssetCurrencyConfigModal";
-import { clearYesterdayBestDisplayCache } from "@/utils/yesterdayBestNode";
 import type { calculateCostSummary } from "@/utils/cost";
 
 const OVERVIEW_CARD_LABELS: Record<string, string> = {
@@ -691,14 +690,13 @@ export function OverviewCardPool({
                         showScopeSelector={true}
                         scope={draft.yesterdayBestScope ?? "tri"}
                         displayMode={draft.yesterdayBestDisplayMode ?? "best"}
-                        onSave={(nodes, scope, displayMode) => {
-                          // 配置变更时立即失效并清理展示缓存与内存缓存，杜绝旧参评机器幽灵回显
-                          clearYesterdayBestDisplayCache();
-
+                        includeIpv6={draft.yesterdayBestIncludeIpv6}
+                        onSave={(nodes, scope, displayMode, includeIpv6) => {
                           const nextPatch: Partial<ThemeDraft> = {
                             yesterdayBestIncludedNodes: nodes,
                             ...(scope ? { yesterdayBestScope: scope } : {}),
                             ...(displayMode ? { yesterdayBestDisplayMode: displayMode } : {}),
+                            ...(includeIpv6 !== undefined ? { yesterdayBestIncludeIpv6: includeIpv6 } : {}),
                           };
                           patch("yesterdayBestIncludedNodes", nodes);
                           if (scope) {
@@ -706,6 +704,9 @@ export function OverviewCardPool({
                           }
                           if (displayMode) {
                             patch("yesterdayBestDisplayMode", displayMode);
+                          }
+                          if (includeIpv6 !== undefined) {
+                            patch("yesterdayBestIncludeIpv6", includeIpv6);
                           }
                           void handleSave?.({ ...draft, ...nextPatch });
                         }}

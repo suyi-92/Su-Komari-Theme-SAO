@@ -1,5 +1,5 @@
 import { getPingOverviewStats, getPublicPingTasks } from "@/services/api";
-import type { PingTaskStats, YesterdayBestScope } from "@/types/komari";
+import type { PingTask, PingTaskStats, YesterdayBestDisplayMode, YesterdayBestScope } from "@/types/komari";
 import { detectCarrier, type CarrierType } from "@/utils/carrierLoss";
 
 export interface YesterdayBestNodeResult {
@@ -27,7 +27,16 @@ export interface YesterdayLeaderboardItem extends YesterdayBestNodeResult {
 
 const DISPLAY_STORAGE_KEY = "komaritheme:yesterday-best-display";
 const LEADERBOARD_STORAGE_KEY = "komaritheme:yesterday-leaderboard";
+const CACHE_VERSION = 2;
 const CACHE_TTL_MS = 30 * 60 * 1000; // 滚动 24H 缓存 TTL：30 分钟
+
+function getStorageKey(base: string, scope: YesterdayBestScope, includeIpv6: boolean) {
+  return `${base}:v${CACHE_VERSION}:${scope}:${includeIpv6 ? "dual" : "ipv4"}`;
+}
+
+function getCandidateKey(candidateUuids: string[]) {
+  return JSON.stringify(candidateUuids);
+}
 
 export interface YesterdayBestDisplayCache {
   date: string;
@@ -39,7 +48,7 @@ export interface YesterdayBestDisplayCache {
   avgLatency: number;
   avgLoss: number;
   scope?: YesterdayBestScope;
-  mode?: "best" | "average";
+  mode?: YesterdayBestDisplayMode;
   sampleCount?: number;
 }
 
@@ -234,6 +243,8 @@ export function getYesterdayBestDisplayCache(
   candidateUuidsOrScopeOrNow?: string[] | YesterdayBestScope | number,
   scopeOrNow: YesterdayBestScope | number = "tri",
   maybeNow = Date.now(),
+  includeIpv6 = false,
+  mode?: YesterdayBestDisplayMode,
 ): YesterdayBestDisplayCache | null {
   if (typeof window === "undefined" || !window.localStorage) return null;
   try {
@@ -253,9 +264,7 @@ export function getYesterdayBestDisplayCache(
       scope = typeof scopeOrNow === "string" ? scopeOrNow : "tri";
     }
 
-    const key = `${DISPLAY_STORAGE_KEY}:${scope}`;
-    const raw = window.localStorage.getItem(key) ||
-      (scope === "tri" ? window.localStorage.getItem(DISPLAY_STORAGE_KEY) : null);
+    const raw = window.localStorage.getItem(getStorageKey(DISPLAY_STORAGE_KEY, scope, includeIpv6));
     if (!raw) return null;
 
     const parsed = JSON.parse(raw) as YesterdayBestDisplayCache;
@@ -266,16 +275,16 @@ export function getYesterdayBestDisplayCache(
       parsed &&
       typeof parsed === "object" &&
       parsed.date === todayDateStr &&
+      typeof parsed.timestamp === "number" &&
+      now - parsed.timestamp < CACHE_TTL_MS &&
+      (mode === undefined || parsed.mode === mode) &&
       typeof parsed.score === "number" &&
       Number.isFinite(parsed.score) &&
       typeof parsed.nodeName === "string" &&
       typeof parsed.nodeIndexText === "string"
     ) {
-      if (candidateUuids !== undefined) {
-        const currentCandidateKey = [...candidateUuids].sort().join(",");
-        if (parsed.candidateKey !== undefined && parsed.candidateKey !== currentCandidateKey) {
-          return null;
-        }
+      if (candidateUuids !== undefined && parsed.candidateKey !== getCandidateKey(candidateUuids)) {
+        return null;
       }
       return parsed;
     }
@@ -296,10 +305,13 @@ export function setYesterdayBestDisplayCache(
     avgLatency: number;
     avgLoss: number;
     scope?: YesterdayBestScope;
+    mode?: YesterdayBestDisplayMode;
+    sampleCount?: number;
   },
   candidateUuids?: string[],
   scopeOrNow: YesterdayBestScope | number = "tri",
   maybeNow = Date.now(),
+  includeIpv6 = false,
 ): void {
   if (typeof window === "undefined" || !window.localStorage) return;
   try {
@@ -308,7 +320,7 @@ export function setYesterdayBestDisplayCache(
       : (display.scope || "tri");
     const now: number = typeof scopeOrNow === "number" ? scopeOrNow : maybeNow;
     const { todayDateStr } = getTodayCacheKey(now);
-    const candidateKey = candidateUuids ? [...candidateUuids].sort().join(",") : "";
+    const candidateKey = candidateUuids ? getCandidateKey(candidateUuids) : "";
     const data: YesterdayBestDisplayCache = {
       date: todayDateStr,
       timestamp: now,
@@ -316,7 +328,7 @@ export function setYesterdayBestDisplayCache(
       scope,
       ...display,
     };
-    window.localStorage.setItem(`${DISPLAY_STORAGE_KEY}:${scope}`, JSON.stringify(data));
+    window.localStorage.setItem(getStorageKey(DISPLAY_STORAGE_KEY, scope, includeIpv6), JSON.stringify(data));
   } catch {
     // 忽略写入异常
   }
@@ -326,21 +338,18 @@ export function setYesterdayBestDisplayCache(
  * 清除昨日最佳卡片的首屏展示缓存与内存缓存
  */
 export function clearYesterdayBestDisplayCache(scope?: YesterdayBestScope): void {
-  memoryBestCache = null;
-  inflightPromise = null;
-  inflightKey = "";
+  memoryBestCache.clear();
+  inflightRequests.clear();
 
   if (typeof window === "undefined" || !window.localStorage) return;
   try {
-    if (scope) {
-      window.localStorage.removeItem(`${DISPLAY_STORAGE_KEY}:${scope}`);
-      window.localStorage.removeItem(`${LEADERBOARD_STORAGE_KEY}:${scope}`);
-    } else {
-      window.localStorage.removeItem(DISPLAY_STORAGE_KEY);
-      window.localStorage.removeItem(LEADERBOARD_STORAGE_KEY);
-      for (const s of ["tri", "ct", "cu", "cm", "all"]) {
-        window.localStorage.removeItem(`${DISPLAY_STORAGE_KEY}:${s}`);
-        window.localStorage.removeItem(`${LEADERBOARD_STORAGE_KEY}:${s}`);
+    const scopes: YesterdayBestScope[] = scope ? [scope] : ["tri", "ct", "cu", "cm", "all"];
+    for (const base of [DISPLAY_STORAGE_KEY, LEADERBOARD_STORAGE_KEY]) {
+      if (!scope) window.localStorage.removeItem(base);
+      for (const value of scopes) {
+        window.localStorage.removeItem(`${base}:${value}`);
+        window.localStorage.removeItem(getStorageKey(base, value, false));
+        window.localStorage.removeItem(getStorageKey(base, value, true));
       }
     }
   } catch {
@@ -354,21 +363,25 @@ export function clearYesterdayBestDisplayCache(scope?: YesterdayBestScope): void
 export function getYesterdayLeaderboardCache(
   scopeOrNow: YesterdayBestScope | number = "tri",
   maybeNow = Date.now(),
+  includeIpv6 = false,
+  candidateUuids?: string[],
 ): YesterdayLeaderboardItem[] | null {
   if (typeof window === "undefined" || !window.localStorage) return null;
   try {
     const scope: YesterdayBestScope = typeof scopeOrNow === "string" ? scopeOrNow : "tri";
     const now: number = typeof scopeOrNow === "number" ? scopeOrNow : maybeNow;
-    const key = `${LEADERBOARD_STORAGE_KEY}:${scope}`;
-    const raw = window.localStorage.getItem(key) ||
-      (scope === "tri" ? window.localStorage.getItem(LEADERBOARD_STORAGE_KEY) : null);
+    const raw = window.localStorage.getItem(getStorageKey(LEADERBOARD_STORAGE_KEY, scope, includeIpv6));
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     const { todayDateStr } = getTodayCacheKey(now);
-    if (parsed && parsed.date === todayDateStr && Array.isArray(parsed.leaderboard)) {
-      if (parsed.timestamp && (now - parsed.timestamp > CACHE_TTL_MS)) {
-        return null;
-      }
+    if (
+      parsed &&
+      parsed.date === todayDateStr &&
+      typeof parsed.timestamp === "number" &&
+      now - parsed.timestamp < CACHE_TTL_MS &&
+      Array.isArray(parsed.leaderboard) &&
+      (candidateUuids === undefined || parsed.candidateKey === getCandidateKey(candidateUuids))
+    ) {
       return parsed.leaderboard;
     }
   } catch {
@@ -384,77 +397,90 @@ export function setYesterdayLeaderboardCache(
   leaderboard: YesterdayLeaderboardItem[],
   scopeOrNow: YesterdayBestScope | number = "tri",
   maybeNow = Date.now(),
+  includeIpv6 = false,
+  candidateUuids?: string[],
 ): void {
   if (typeof window === "undefined" || !window.localStorage) return;
   try {
     const scope: YesterdayBestScope = typeof scopeOrNow === "string" ? scopeOrNow : "tri";
     const now: number = typeof scopeOrNow === "number" ? scopeOrNow : maybeNow;
     const { todayDateStr } = getTodayCacheKey(now);
-    window.localStorage.setItem(
-      `${LEADERBOARD_STORAGE_KEY}:${scope}`,
-      JSON.stringify({ date: todayDateStr, timestamp: now, leaderboard, scope }),
-    );
+    window.localStorage.setItem(getStorageKey(LEADERBOARD_STORAGE_KEY, scope, includeIpv6), JSON.stringify({
+      date: todayDateStr,
+      timestamp: now,
+      leaderboard,
+      candidateKey: candidateUuids ? getCandidateKey(candidateUuids) : undefined,
+    }));
   } catch {
     // 忽略写入异常
   }
 }
 
-// 进程/会话级内存缓存，当首屏拉取完后立刻驻留，避免重复发起请求与 200ms 闪烁
-let memoryBestCache: {
-  date: string;
-  timestamp: number;
-  candidateKey: string;
-  scope: YesterdayBestScope;
-  result: YesterdayBestNodeResult | null;
+export interface YesterdayLeaderboardResult {
+  best: YesterdayBestNodeResult | null;
   leaderboard: YesterdayLeaderboardItem[];
-} | null = null;
-let inflightPromise: Promise<{ best: YesterdayBestNodeResult | null; leaderboard: YesterdayLeaderboardItem[] }> | null = null;
-let inflightKey = "";
+}
 
-export function getMemoryYesterdayBestNode(
+interface YesterdayLeaderboardOptions {
+  signal?: AbortSignal;
+  now?: number;
+  tasksOverride?: number[];
+  scope?: YesterdayBestScope;
+  includeIpv6?: boolean;
+}
+
+// 每个赛道和协议组合只保留最近一次的候选集结果。
+const memoryBestCache = new Map<string, {
+  requestKey: string;
+  timestamp: number;
+  result: YesterdayLeaderboardResult;
+}>();
+const inflightRequests = new Map<string, Promise<YesterdayLeaderboardResult>>();
+
+export function getMemoryYesterdayLeaderboardResult(
   candidateUuids: string[],
-  scopeOrNow: YesterdayBestScope | number = "tri",
-  maybeNow = Date.now(),
-): YesterdayBestNodeResult | null | undefined {
-  const scope: YesterdayBestScope = typeof scopeOrNow === "string" ? scopeOrNow : "tri";
-  const now: number = typeof scopeOrNow === "number" ? scopeOrNow : maybeNow;
+  { scope = "tri", includeIpv6 = false, now = Date.now() }: Pick<YesterdayLeaderboardOptions, "scope" | "includeIpv6" | "now"> = {},
+): YesterdayLeaderboardResult | undefined {
   const { yesterdayDateStr } = getYesterdayTimeWindow(now);
-  const sortedKey = [...candidateUuids].sort().join(",");
-  if (
-    memoryBestCache &&
-    memoryBestCache.date === yesterdayDateStr &&
-    memoryBestCache.candidateKey === sortedKey &&
-    memoryBestCache.scope === scope &&
-    (now - memoryBestCache.timestamp < CACHE_TTL_MS)
-  ) {
-    return memoryBestCache.result;
-  }
-  const persisted = getYesterdayBestNodeCache(candidateUuids, scope, now);
-  if (persisted) {
-    return persisted;
+  const entry = memoryBestCache.get(`${scope}:${includeIpv6}`);
+  if (entry?.requestKey === `${yesterdayDateStr}:${getCandidateKey(candidateUuids)}` && now - entry.timestamp < CACHE_TTL_MS) {
+    return entry.result;
   }
   return undefined;
 }
 
-export function getMemoryYesterdayLeaderboard(
-  candidateUuids: string[],
-  scopeOrNow: YesterdayBestScope | number = "tri",
-  maybeNow = Date.now(),
-): YesterdayLeaderboardItem[] | undefined {
-  const scope: YesterdayBestScope = typeof scopeOrNow === "string" ? scopeOrNow : "tri";
-  const now: number = typeof scopeOrNow === "number" ? scopeOrNow : maybeNow;
-  const { yesterdayDateStr } = getYesterdayTimeWindow(now);
-  const sortedKey = [...candidateUuids].sort().join(",");
-  if (
-    memoryBestCache &&
-    memoryBestCache.date === yesterdayDateStr &&
-    memoryBestCache.candidateKey === sortedKey &&
-    memoryBestCache.scope === scope &&
-    (now - memoryBestCache.timestamp < CACHE_TTL_MS)
-  ) {
-    return memoryBestCache.leaderboard;
+function detectPingTaskFamily(task: PingTask, name: string): 4 | 6 {
+  for (const value of [
+    task.ip_version, task.ipVersion, task.address_family, task.addressFamily,
+    task.ip_family, task.ipFamily, task.family,
+  ]) {
+    if (typeof value !== "string" && typeof value !== "number") continue;
+    const family = String(value).trim().toLowerCase();
+    if (/^(?:6|ipv?6|v6|(?:af[_-]?)?inet6)$/.test(family)) return 6;
+    if (/^(?:4|ipv?4|v4|(?:af[_-]?)?inet4?)$/.test(family)) return 4;
   }
-  return undefined;
+
+  const target = task.target.trim();
+  if (target) {
+    // URL 的主机名解析能区分 IP 字面量和普通域名加端口。
+    const url = target.includes("://") ? target : `http://${target}`;
+    for (const candidate of target.includes(":") ? [url, `http://[${target}]`] : [url]) {
+      try {
+        const { hostname } = new URL(candidate);
+        if (hostname.startsWith("[")) return 6;
+        if (/^\d+(?:\.\d+){3}$/.test(hostname)) return 4;
+        break;
+      } catch {
+        // 裸 IPv6 地址需要加方括号后再解析。
+      }
+    }
+  }
+
+  const type = /^(?:icmp|ping|tcp|udp|https?)[-_ ]?(?:ipv?|v)?([46])$/i.exec(task.type.trim());
+  if (type) return type[1] === "6" ? 6 : 4;
+
+  // Komari 的公开任务可省略目标地址，使用任务名中的独立协议标记。
+  return /(?:^|[^a-z0-9])(?:ip[-_ ]?v?|v)6(?![a-z0-9])/i.test(name) ? 6 : 4;
 }
 
 /**
@@ -462,104 +488,71 @@ export function getMemoryYesterdayLeaderboard(
  */
 export async function calculateYesterdayBestLeaderboard(
   candidateUuids: string[],
-  options?: {
-    signal?: AbortSignal;
-    now?: number;
-    tasksOverride?: number[];
-    scope?: YesterdayBestScope;
-  },
-): Promise<{ best: YesterdayBestNodeResult | null; leaderboard: YesterdayLeaderboardItem[] }> {
-  const { yesterdayDateStr } = getYesterdayTimeWindow(options?.now);
+  options?: YesterdayLeaderboardOptions,
+): Promise<YesterdayLeaderboardResult> {
   const now = options?.now ?? Date.now();
+  const { yesterdayDateStr } = getYesterdayTimeWindow(now);
   const scope: YesterdayBestScope = options?.scope ?? "tri";
-  const sortedKey = [...candidateUuids].sort().join(",");
+  const includeIpv6 = options?.includeIpv6 === true;
+  const hasTaskOverride = Boolean(options?.tasksOverride?.length);
+  const cached = !hasTaskOverride && getMemoryYesterdayLeaderboardResult(candidateUuids, { scope, includeIpv6, now });
+  if (cached) return cached;
 
-  if (
-    memoryBestCache &&
-    memoryBestCache.date === yesterdayDateStr &&
-    memoryBestCache.candidateKey === sortedKey &&
-    memoryBestCache.scope === scope &&
-    (now - memoryBestCache.timestamp < CACHE_TTL_MS)
-  ) {
-    return { best: memoryBestCache.result, leaderboard: memoryBestCache.leaderboard };
-  }
+  const selectionKey = `${scope}:${includeIpv6}`;
+  const requestKey = `${yesterdayDateStr}:${getCandidateKey(candidateUuids)}`;
+  const inflightKey = `${selectionKey}:${requestKey}:${JSON.stringify(options?.tasksOverride ?? [])}`;
+  const inflight = inflightRequests.get(inflightKey);
+  if (inflight) return inflight;
 
-  const currentKey = `${yesterdayDateStr}:${scope}:${sortedKey}`;
-  if (inflightPromise && inflightKey === currentKey) {
-    return inflightPromise;
-  }
-
-  // P3: 先设置 inflightKey 和 inflightPromise，再开始实际执行异步任务，彻底杜绝同步或并发间隙去重失效
-  inflightKey = currentKey;
   const promise = (async () => {
     // 1. 获取任务列表并识别运营商，根据 scope 筛选出合规的任务集合
-    let publicTasks: { id: number; name: string }[] = [];
+    let publicTasks: PingTask[] = [];
     try {
       publicTasks = await getPublicPingTasks({ signal: options?.signal });
-    } catch {
-      publicTasks = [];
+    } catch (error) {
+      if (options?.signal?.aborted) throw error;
     }
 
     const taskCarrierMap = new Map<number, CarrierType>();
-    const triTaskIds: number[] = [];
-    const ctTaskIds: number[] = [];
-    const cuTaskIds: number[] = [];
-    const cmTaskIds: number[] = [];
-    const allTaskIds: number[] = [];
+    const excludedTaskIds = new Set<number>();
+    const targetTaskSet = new Set<number>();
 
     for (const t of publicTasks) {
       if (!Number.isInteger(t.id) || t.id <= 0) continue;
-      const carrier = detectCarrier(t.name || "");
+      // 兼容 CTv6、CUIPv6 等紧凑命名，同时保留运营商缩写的单词边界。
+      const name = t.name.replace(/\b(ct|cu|cm)(?=(?:ip[-_ ]?v?|v)[46](?![a-z0-9]))/gi, "$1-");
+      if (!includeIpv6 && detectPingTaskFamily(t, name) === 6) {
+        excludedTaskIds.add(t.id);
+        continue;
+      }
+      const carrier = detectCarrier(name);
       taskCarrierMap.set(t.id, carrier);
-      allTaskIds.push(t.id);
-      if (carrier === "ct") {
-        ctTaskIds.push(t.id);
-        triTaskIds.push(t.id);
-      } else if (carrier === "cu") {
-        cuTaskIds.push(t.id);
-        triTaskIds.push(t.id);
-      } else if (carrier === "cm") {
-        cmTaskIds.push(t.id);
-        triTaskIds.push(t.id);
+      if (scope === "all" || scope === carrier || (scope === "tri" && carrier !== "unknown")) {
+        targetTaskSet.add(t.id);
       }
     }
 
-    let targetTaskIds = options?.tasksOverride;
-    if (!targetTaskIds || targetTaskIds.length === 0) {
-      if (scope === "tri") {
-        targetTaskIds = triTaskIds;
-      } else if (scope === "ct") {
-        targetTaskIds = ctTaskIds;
-      } else if (scope === "cu") {
-        targetTaskIds = cuTaskIds;
-      } else if (scope === "cm") {
-        targetTaskIds = cmTaskIds;
-      } else {
-        targetTaskIds = allTaskIds;
-      }
-    }
+    const allowedTaskSet = options?.tasksOverride?.length
+      ? new Set(options.tasksOverride.filter((id) => Number.isInteger(id) && id > 0 && !excludedTaskIds.has(id)))
+      : targetTaskSet;
 
     // 2. 直接单次请求近 24 小时饱满统计数据 (hours: 24)
     // 探针后端物理保留 24 小时时序，直接获取饱满的 1440 个采样点（~7KB 极速加载）
     // 配合多线路组内方差加权 (Within-group Pooled Variance)，既杜绝了历史差分因下午老数据滚出导致的
     // 样本缩水与漂移，又不会因三网路由天然延迟落差而误伤平直稳定的节点！
-    const queryTaskIds = targetTaskIds.length > 0 ? targetTaskIds : (allTaskIds.length > 0 ? allTaskIds : [1]);
-    const allowedTaskSet = new Set(targetTaskIds);
-
     let statsTotal: PingTaskStats[] = [];
-    if (targetTaskIds.length > 0) {
+    if (allowedTaskSet.size > 0) {
       try {
-        statsTotal = await getPingOverviewStats(24, queryTaskIds, {
+        statsTotal = await getPingOverviewStats(24, [...allowedTaskSet], {
           entityIds: candidateUuids,
           signal: options?.signal,
         });
-      } catch {
-        statsTotal = [];
+      } catch (error) {
+        if (options?.signal?.aborted) throw error;
       }
     }
 
     if (!statsTotal || statsTotal.length === 0) {
-      memoryBestCache = { date: yesterdayDateStr, timestamp: now, candidateKey: sortedKey, scope, result: null, leaderboard: [] };
       return { best: null, leaderboard: [] };
     }
 
@@ -588,7 +581,7 @@ export async function calculateYesterdayBestLeaderboard(
     for (const s of statsTotal) {
       if (!candidateSet.has(s.client)) continue;
       // 严格剥离不属于当前 scope 答卷范围的任务
-      if (s.taskId != null && !allowedTaskSet.has(s.taskId)) continue;
+      if (!allowedTaskSet.has(s.taskId)) continue;
 
       let agg = map.get(s.client);
       if (!agg) {
@@ -601,13 +594,10 @@ export async function calculateYesterdayBestLeaderboard(
         map.set(s.client, agg);
       }
 
-      let carrier: CarrierType | undefined;
-      if (s.taskId != null) {
-        agg.tasks.add(s.taskId);
-        carrier = taskCarrierMap.get(s.taskId);
-        if (carrier && carrier !== "unknown") {
-          agg.coveredCarriers.add(carrier);
-        }
+      agg.tasks.add(s.taskId);
+      const carrier = taskCarrierMap.get(s.taskId);
+      if (carrier && carrier !== "unknown") {
+        agg.coveredCarriers.add(carrier);
       }
 
       const pureAvg = s.avg ?? 0;
@@ -735,23 +725,21 @@ export async function calculateYesterdayBestLeaderboard(
     // 只有合格未缺考的节点，才有资格当选昨日最佳总冠军！
     const bestNode = leaderboard.find((item) => item.isQualified) || null;
 
-    if (bestNode) {
-      setYesterdayBestNodeCache(bestNode, candidateUuids, scope);
-    }
-    setYesterdayLeaderboardCache(leaderboard, scope, now);
-
-    memoryBestCache = { date: yesterdayDateStr, timestamp: now, candidateKey: sortedKey, scope, result: bestNode, leaderboard };
     return { best: bestNode, leaderboard };
   })();
 
-  inflightPromise = promise;
+  inflightRequests.set(inflightKey, promise);
 
   try {
-    return await promise;
+    const result = await promise;
+    if (!hasTaskOverride && !options?.signal?.aborted && inflightRequests.get(inflightKey) === promise) {
+      memoryBestCache.set(selectionKey, { requestKey, timestamp: now, result });
+      setYesterdayLeaderboardCache(result.leaderboard, scope, now, includeIpv6, candidateUuids);
+    }
+    return result;
   } finally {
-    if (inflightKey === currentKey) {
-      inflightPromise = null;
-      inflightKey = "";
+    if (inflightRequests.get(inflightKey) === promise) {
+      inflightRequests.delete(inflightKey);
     }
   }
 }
@@ -794,12 +782,7 @@ export function calculateYesterdayAverageScore(
  */
 export async function calculateYesterdayBestNode(
   candidateUuids: string[],
-  options?: {
-    signal?: AbortSignal;
-    now?: number;
-    tasksOverride?: number[];
-    scope?: YesterdayBestScope;
-  },
+  options?: YesterdayLeaderboardOptions,
 ): Promise<YesterdayBestNodeResult | null> {
   const result = await calculateYesterdayBestLeaderboard(candidateUuids, options);
   return result.best;

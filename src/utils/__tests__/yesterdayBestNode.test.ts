@@ -1,4 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
+import { getPingOverviewStats, getPublicPingTasks } from "@/services/api";
+import { PingTaskSchema, type PingTaskStats } from "@/types/komari";
 import {
   getYesterdayTimeWindow,
   calculateNodeNetworkScore,
@@ -8,7 +10,24 @@ import {
   getYesterdayLeaderboardCache,
   setYesterdayLeaderboardCache,
   calculateYesterdayAverageScore,
+  calculateYesterdayBestLeaderboard,
+  getMemoryYesterdayLeaderboardResult,
 } from "../yesterdayBestNode";
+
+vi.mock("@/services/api", () => ({
+  getPublicPingTasks: vi.fn(),
+  getPingOverviewStats: vi.fn(),
+}));
+
+const scoreNow = new Date(2026, 10, 19, 15).getTime();
+
+function scoreStat(taskId: number, client = "node-a", loss = 0): PingTaskStats {
+  return {
+    taskId, client, loss, avg: 100, p50: 100, p99: 100, stddev: 0,
+    name: "", type: "icmp", interval: 60, total: 100, valid: 100,
+    min: 100, max: 100, latest: 100, p99P50Ratio: 1,
+  };
+}
 
 describe("yesterdayBestNode utils", () => {
   let store: Record<string, string> = {};
@@ -29,6 +48,8 @@ describe("yesterdayBestNode utils", () => {
     };
     vi.stubGlobal("window", { localStorage: localStorageMock });
     vi.stubGlobal("localStorage", localStorageMock);
+    clearYesterdayBestDisplayCache();
+    vi.resetAllMocks();
   });
 
   it("calculates window date string accurately", () => {
@@ -157,6 +178,105 @@ describe("yesterdayBestNode utils", () => {
     expect(cached).toHaveLength(1);
     expect(cached?.[0].uuid).toBe("uuid-1");
     expect(cached?.[0].rank).toBe(1);
+  });
+
+  it("keeps IPv4 and dual-stack display and leaderboard caches independent and skips old mixed entries", () => {
+    const nodes = ["node-a"];
+    const v4Display = { nodeIndexText: "#1", nodeName: "Node A", score: 100, avgLatency: 100, avgLoss: 0 };
+    const dualDisplay = { ...v4Display, score: 50, avgLoss: 50 };
+    const v4Board = [{ ...scoreStat(1), ...v4Display, uuid: "node-a", date: "2026-11-19", cv: 0, spikeRatio: 1, sampleCount: 100, rank: 1 }];
+    store["komaritheme:yesterday-best-display:tri"] = JSON.stringify({ ...dualDisplay, date: "2026-11-19", candidateKey: "node-a" });
+    store["komaritheme:yesterday-leaderboard:tri"] = JSON.stringify({ leaderboard: v4Board, date: "2026-11-19" });
+
+    expect(getYesterdayBestDisplayCache(nodes, "tri", scoreNow)).toBeNull();
+    expect(getYesterdayLeaderboardCache("tri", scoreNow)).toBeNull();
+
+    setYesterdayBestDisplayCache(v4Display, nodes, "tri", scoreNow);
+    setYesterdayLeaderboardCache(v4Board, "tri", scoreNow, false, nodes);
+    expect(getYesterdayBestDisplayCache(nodes, "tri", scoreNow, true)).toBeNull();
+    expect(getYesterdayLeaderboardCache("tri", scoreNow, true, nodes)).toBeNull();
+
+    setYesterdayBestDisplayCache(dualDisplay, nodes, "tri", scoreNow, true);
+    expect(getYesterdayBestDisplayCache(nodes, "tri", scoreNow, true)?.score).toBe(50);
+    expect(getYesterdayBestDisplayCache(nodes, "tri", scoreNow)?.score).toBe(100);
+    expect(getYesterdayLeaderboardCache("tri", scoreNow, false, ["node-b"])).toBeNull();
+  });
+
+  it("filters each scoring track by protocol before requesting 24h stats and qualifying nodes", async () => {
+    vi.mocked(getPublicPingTasks).mockResolvedValue([
+      { id: 11, name: "电信" },
+      { id: 12, name: "联通-IPv4" },
+      { id: 13, name: "移动" },
+      { id: 21, name: "电信-IPv6" },
+      { id: 22, name: "CUIPv6" },
+      { id: 23, name: "移动v6" },
+      { id: 31, name: "教育网", target: "https://[2001:db8::1]:8443/ping" },
+      { id: 32, name: "海外", target: "2001:db8::2" },
+      { id: 33, name: "海外", type: "icmp6" },
+      { id: 34, name: "海外", address_family: "AF_INET6" },
+      { id: 35, name: "海外 SRv6", target: "host.example:443" },
+      { id: 36, name: "海外 [IPv6]", ip_version: 4 },
+      { id: 37, name: "海外 [IPv6]", target: "http://192.0.2.8:8080/ping" },
+    ].map((task) => PingTaskSchema.parse(task)));
+    vi.mocked(getPingOverviewStats).mockResolvedValue([
+      ...[11, 12, 13, 21, 22, 23, 31, 32, 33, 34, 35, 36, 37].map((id) => scoreStat(id, "node-a", id >= 21 && id <= 34 ? 100 : 0)),
+      ...[11, 12, 23].map((id) => scoreStat(id, "node-b")),
+      scoreStat(999, "node-a", 100),
+      scoreStat(11, "outside-candidates"),
+    ]);
+    const candidates = ["node-a", "node-b"];
+    const ipv4 = await calculateYesterdayBestLeaderboard(candidates, { now: scoreNow });
+    expect(getPingOverviewStats).toHaveBeenLastCalledWith(24, [11, 12, 13], { entityIds: candidates, signal: undefined });
+    expect(ipv4.best).toMatchObject({ uuid: "node-a", score: 100, taskCount: 3 });
+    expect(ipv4.leaderboard[1]).toMatchObject({ uuid: "node-b", isQualified: false, missingCarriers: ["cm"] });
+
+    const dual = await calculateYesterdayBestLeaderboard(candidates, { now: scoreNow, includeIpv6: true });
+    expect(getPingOverviewStats).toHaveBeenLastCalledWith(24, [11, 12, 13, 21, 22, 23], expect.anything());
+    expect(dual.best).toMatchObject({ uuid: "node-b", isQualified: true });
+    expect(dual.leaderboard[1]).toMatchObject({ uuid: "node-a", score: 50, taskCount: 6 });
+
+    await calculateYesterdayBestLeaderboard(candidates, { now: scoreNow, scope: "ct" });
+    expect(getPingOverviewStats).toHaveBeenLastCalledWith(24, [11], expect.anything());
+    await calculateYesterdayBestLeaderboard(candidates, { now: scoreNow, scope: "ct", includeIpv6: true });
+    expect(getPingOverviewStats).toHaveBeenLastCalledWith(24, [11, 21], expect.anything());
+    await calculateYesterdayBestLeaderboard(candidates, { now: scoreNow, scope: "all" });
+    expect(getPingOverviewStats).toHaveBeenLastCalledWith(24, [11, 12, 13, 35, 36, 37], expect.anything());
+    await calculateYesterdayBestLeaderboard(candidates, { now: scoreNow, scope: "all", includeIpv6: true });
+    expect(getPingOverviewStats).toHaveBeenLastCalledWith(24, [11, 12, 13, 21, 22, 23, 31, 32, 33, 34, 35, 36, 37], expect.anything());
+  });
+
+  it("skips the stats call when the only public tasks are IPv6 and the switch is off", async () => {
+    vi.mocked(getPublicPingTasks).mockResolvedValue([PingTaskSchema.parse({ id: 21, name: "电信-IPv6" })]);
+    const result = await calculateYesterdayBestLeaderboard(["node-a"], { now: scoreNow, scope: "ct" });
+    expect(result).toEqual({ best: null, leaderboard: [] });
+    expect(getPingOverviewStats).not.toHaveBeenCalled();
+  });
+
+  it("deduplicates in-flight requests within a protocol without reusing the other protocol outcome", async () => {
+    vi.mocked(getPublicPingTasks).mockResolvedValue([
+      PingTaskSchema.parse({ id: 11, name: "电信" }),
+      PingTaskSchema.parse({ id: 21, name: "电信-IPv6" }),
+    ]);
+    let releaseIpv4!: (stats: PingTaskStats[]) => void;
+    const ipv4Stats = new Promise<PingTaskStats[]>((resolve) => {
+      releaseIpv4 = resolve;
+    });
+    vi.mocked(getPingOverviewStats).mockImplementation((_hours, ids) => (
+      ids.includes(21) ? Promise.resolve([scoreStat(11), scoreStat(21, "node-a", 100)]) : ipv4Stats
+    ));
+    const candidates = ["node-a"];
+    const options = { now: scoreNow, scope: "ct" as const };
+    const ipv4 = calculateYesterdayBestLeaderboard(candidates, options);
+    const dual = calculateYesterdayBestLeaderboard(candidates, { ...options, includeIpv6: true });
+    const sameIpv4 = calculateYesterdayBestLeaderboard(candidates, options);
+
+    expect((await dual).best?.score).toBe(50);
+    releaseIpv4([scoreStat(11)]);
+    expect((await ipv4).best?.score).toBe(100);
+    expect(await sameIpv4).toBe(await ipv4);
+    expect(getPingOverviewStats).toHaveBeenCalledTimes(2);
+    expect(getMemoryYesterdayLeaderboardResult(candidates, options)?.best?.score).toBe(100);
+    expect(getMemoryYesterdayLeaderboardResult(candidates, { ...options, includeIpv6: true })?.best?.score).toBe(50);
   });
 
   it("safely ignores malformed or corrupt cache without crashing", () => {

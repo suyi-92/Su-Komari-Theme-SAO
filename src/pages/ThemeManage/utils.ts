@@ -211,6 +211,7 @@ export function pickManagedThemeSettings(settings: ResolvedThemeSettings) {
     carrierLossIncludedNodes: settings.carrierLossIncludedNodes,
     yesterdayBestIncludedNodes: settings.yesterdayBestIncludedNodes,
     yesterdayBestScope: settings.yesterdayBestScope,
+    yesterdayBestIncludeIpv6: settings.yesterdayBestIncludeIpv6,
     yesterdayBestDisplayMode: settings.yesterdayBestDisplayMode,
     costPremiums: Object.fromEntries(
       Object.keys(settings.costPremiums)
