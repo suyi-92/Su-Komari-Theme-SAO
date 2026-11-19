@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import UplotReact from "uplot-react";
 import type uPlot from "uplot";
 import { Eye, EyeOff, RefreshCw } from "lucide-react";
@@ -15,6 +15,8 @@ import {
   type ChartTooltipState,
 } from "./chartShared";
 import { ChartTooltip, SwitchToggle } from "./ChartParts";
+import { PingLossBands, type PingLossViewport } from "./PingLossBands";
+import { buildPingLossBands } from "./pingLossData";
 import {
   cutPeakValues,
   detectTypicalIntervalSeconds,
@@ -128,8 +130,21 @@ export function PingChart({
   const { resolvedAppearance } = usePreferences();
   const { w, h, ref: chartSizeRef } = useResponsiveChartSize("wide");
   const [hiddenTasks, setHiddenTasks] = useState<Set<number>>(new Set());
+  const [showLossBands, setShowLossBands] = useState(true);
   const [connectNulls, setConnectNulls] = useState(false);
   const [cutPeak, setCutPeak] = useState(false);
+  const [lossViewport, setLossViewport] = useState<PingLossViewport | null>(null);
+  const syncLossViewport = useCallback((plot: uPlot) => {
+    const { min, max } = plot.scales.x;
+    const left = plot.over.offsetLeft;
+    const width = plot.over.clientWidth;
+    if (min == null || max == null || max <= min || width <= 0) return;
+    setLossViewport((previous) =>
+      previous?.min === min && previous.max === max && previous.left === left && previous.width === width
+        ? previous
+        : { min, max, left, width },
+    );
+  }, []);
   const chartRef = useRef<uPlot.AlignedData>([[]]);
   const [tooltip, setTooltip] = useState<ChartTooltipState>({
     show: false,
@@ -171,7 +186,6 @@ export function PingChart({
     () => new Map(tasks.map((task, index) => [task.id, colorForSeries(index, tasks.length)] as const)),
     [tasks],
   );
-  const taskKeySet = useMemo(() => new Set(tasks.map((task) => String(task.id))), [tasks]);
   const taskKeys = useMemo(() => tasks.map((task) => String(task.id)), [tasks]);
   const taskIndexById = useMemo(
     () => new Map(tasks.map((task, index) => [task.id, index] as const)),
@@ -211,27 +225,40 @@ export function PingChart({
     [data],
   );
 
-  const chart = useMemo(() => {
-    if (!data?.records.length || !tasks.length) return null;
-    const pointMap = new Map<number, TimedMetricPoint>();
-    const taskIntervals = tasks
+  const metricInterval = data?.intervalSeconds;
+  const { taskIntervals, fallbackInterval } = useMemo(() => {
+    const configuredIntervals = tasks
       .map((task) => task.interval)
-      .filter((value): value is number => typeof value === "number" && value > 0);
+      .filter((value) => Number.isFinite(value) && value > 0);
     const detectedInterval = detectTypicalIntervalSeconds(
       sortedRecords.map(({ time }) => time),
       60,
     );
     const fallbackInterval = resolvePingChartInterval(
-      data.intervalSeconds,
-      taskIntervals.length > 0 ? Math.min(...taskIntervals) : null,
+      metricInterval,
+      configuredIntervals.length > 0 ? Math.min(...configuredIntervals) : null,
       detectedInterval,
     );
+    const taskIntervals = new Map(
+      tasks.map((task) => [task.id, resolvePingChartInterval(metricInterval, task.interval, fallbackInterval)]),
+    );
+    return { taskIntervals, fallbackInterval };
+  }, [metricInterval, sortedRecords, tasks]);
+
+  const lossBands = useMemo(
+    () => showLossBands ? buildPingLossBands(sortedRecords, taskIntervals, metricInterval) : null,
+    [metricInterval, showLossBands, sortedRecords, taskIntervals],
+  );
+
+  const chart = useMemo(() => {
+    if (!sortedRecords.length || !taskKeys.length) return null;
+    const pointMap = new Map<number, TimedMetricPoint>();
     const tolerance = Math.min(6, Math.max(0.8, fallbackInterval * 0.25));
 
     // 升序游标把邻近任务采样合并到同一时间锚点，保持 O(n)。
     let lastAnchor = Number.NEGATIVE_INFINITY;
     for (const { record, time } of sortedRecords) {
-      if (!taskKeySet.has(String(record.task_id))) continue;
+      if (!taskIntervals.has(record.task_id)) continue;
       const anchor = time - lastAnchor <= tolerance ? lastAnchor : time;
       if (anchor === time) lastAnchor = time;
       const current = pointMap.get(anchor) ?? { time: anchor };
@@ -245,12 +272,7 @@ export function PingChart({
       chartPoints = cutPeakValues(chartPoints, taskKeys);
     }
     chartPoints = insertMetricGapSentinels(chartPoints, {
-      intervals: new Map(
-        tasks.map((task) => [
-          String(task.id),
-          resolvePingChartInterval(data.intervalSeconds, task.interval, fallbackInterval),
-        ] as const),
-      ),
+      intervals: new Map(Array.from(taskIntervals, ([id, interval]) => [String(id), interval])),
       defaultInterval: fallbackInterval,
       matchToleranceRatio: 0.25,
     });
@@ -267,7 +289,7 @@ export function PingChart({
     );
 
     return [reduced.times, ...smoothed] as uPlot.AlignedData;
-  }, [cutPeak, data, sortedRecords, taskKeySet, taskKeys, tasks]);
+  }, [cutPeak, fallbackInterval, sortedRecords, taskIntervals, taskKeys]);
 
   useEffect(() => {
     if (chart) chartRef.current = chart;
@@ -350,11 +372,20 @@ export function PingChart({
     });
     return {
       padding: [10, 14, 12, 2],
-      cursor: { drag: { x: true, y: false } },
+      cursor: {
+        drag: { x: true, y: false },
+        bind: requestedXRange ? {
+          dblclick: (plot, _target, handler) => (event) => {
+            handler(event);
+            plot.setScale("x", { min: requestedXRange[0], max: requestedXRange[1] });
+            return null;
+          },
+        } : undefined,
+      },
       legend: { show: false },
       scales: {
         x: requestedXRange
-          ? { time: true, auto: false, range: () => requestedXRange }
+          ? { time: true, auto: false, min: requestedXRange[0], max: requestedXRange[1] }
           : { time: true },
         y: { auto: false, range: yRange },
       },
@@ -370,7 +401,7 @@ export function PingChart({
           stroke: text,
           grid: { stroke: grid, width: 1 },
           ticks: { stroke: grid },
-          size: 54,
+          size: 66,
           values: (_self, splits) => splits.map((value) => (value === 0 ? "" : `${Math.round(value)} ms`)),
         },
       ],
@@ -393,11 +424,12 @@ export function PingChart({
           },
           tooltipHooks.onInit,
         ],
+        draw: [syncLossViewport],
         destroy: [tooltipHooks.onDestroy],
         setCursor: [tooltipHooks.onSetCursor],
       },
     };
-  }, [chart, connectNulls, hiddenTasks, hours, isDark, requestedXRange, taskColors, taskIndexById, taskLabels, tasks, visibleTasks, yRange]);
+  }, [chart, connectNulls, hiddenTasks, hours, isDark, requestedXRange, syncLossViewport, taskColors, taskIndexById, taskLabels, tasks, visibleTasks, yRange]);
 
   const options = useMemo<uPlot.Options | null>(
     () => (baseOptions ? { ...baseOptions, width: w, height: h } : null),
@@ -516,6 +548,12 @@ export function PingChart({
     <InstancePanel title="Ping 图表" description={coverageLabel ?? undefined}>
       <div className="instance-ping-toolbar">
         <SwitchToggle
+          label="丢包色带"
+          active={showLossBands}
+          onToggle={() => setShowLossBands((value) => !value)}
+          title="按线路显示丢包历史：绿色无丢包，红色有丢包，灰色无采样"
+        />
+        <SwitchToggle
           label="削峰平滑"
           active={cutPeak}
           onToggle={() => setCutPeak((value) => !value)}
@@ -585,6 +623,17 @@ export function PingChart({
           );
         })}
       </div>
+
+      {chart && lossBands && lossViewport && visibleTasks.length > 0 && (
+        <PingLossBands
+          key={`${uuid}-${hours}`}
+          bands={lossBands}
+          tasks={visibleTasks}
+          labels={taskLabels}
+          viewport={lossViewport}
+          hours={hours}
+        />
+      )}
 
       <div ref={chartSizeRef} className="instance-uplot-wrap is-large">
         {chart && options && visibleTasks.length > 0 ? (

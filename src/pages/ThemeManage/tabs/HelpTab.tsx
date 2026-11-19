@@ -258,7 +258,7 @@ export function HelpTab({
                 <ul className="list-disc pl-4 space-y-0.5">
                   <li><strong>三网综合（默认）</strong>：参评节点必须同时拥有电信 (CT)、联通 (CU)、移动 (CM) 的测速数据，比拼全能稳定性。</li>
                   <li><strong>单运营商（电信 / 联通 / 移动）</strong>：仅统计指定运营商的线路质量，专线专用，比拼单一路线品质。</li>
-                  <li><strong>全量统计</strong>：汇总该服务器配置的所有测速线路统一打分，准确反映节点自身的综合网络健康度。</li>
+                  <li><strong>全量统计</strong>：汇总参评节点有统计数据的全部公开 Ping 任务，包括教育网等未归入三网的线路。</li>
                 </ul>
                 <p className="text-amber-600/90 dark:text-amber-400/90 font-medium pt-0.5">
                   🛡️ 缺考防刷机制：在「三网综合」模式下，若某节点未配齐三网线路（如缺少移动），系统会自动判定为<strong>「未配齐三网 (缺考)」</strong>，并在天梯榜醒目标注。缺考节点无法参评总冠军与前三名徽章，杜绝少配烂线刷高分的情况。
@@ -273,7 +273,7 @@ export function HelpTab({
               </div>
               <div className="text-(--text-secondary) leading-relaxed space-y-1.5 text-[10.5px]">
                 <p>
-                  与「三网丢包」卡片规则一致，系统根据任务名称关键字自动匹配（不区分大小写）：
+                  稳定评分使用最近 24 小时的公开 Ping 任务统计。三网和单运营商赛道按任务名归类（不区分大小写），同一运营商的 IPv4 和 IPv6 任务都可参评，首页选来展示的线路不会改变计分范围。
                 </p>
                 <div className="rounded-lg bg-[color-mix(in_srgb,var(--bg-card)_90%,transparent)] p-2 border border-(--hairline) font-mono text-[10px] space-y-0.5">
                   <div>• 电信 (CT)：包含 <code>电信</code>、<code>中国电信</code>、<code>ct</code>、<code>chinatelecom</code></div>
@@ -298,11 +298,11 @@ export function HelpTab({
                 <ul className="list-disc pl-4 space-y-1">
                   <li>
                     <strong>① 停测后 24 小时内（过渡期）：</strong>
-                    该线路虽然已停止上报新数据，但过去 24 小时内仍残留有历史打点。系统对三网丢包实行<strong>等权重算术平均（各占 1/3）</strong>，只要该线路还在 24 小时窗口内，它停测前的实际丢包表现就会如实计入三网评分，绝不会因中途解绑故障线路而虚高拉升。
+                    任务保持公开且后端仍返回该线路的统计时，停测前的丢包会继续计入。每条有统计数据的任务在丢包均值中占相同权重。
                   </li>
                   <li>
                     <strong>② 满 24 小时后（历史数据完全滚出）：</strong>
-                    随着旧数据彻底超出 24 小时统计窗口，该线路在窗口内的打点完全归零。系统自动触发防缺考机制，将其标记为<strong>「未配齐三网 (缺移动)」</strong>并移出三网排名；若切换到它仍保留的单运营商赛道（如电信），则继续正常参评。
+                    旧数据超出统计窗口后，该线路不再计入。若节点因此缺少某个运营商的统计，三网榜会标为缺考，仍有数据的单运营商赛道可继续参评。
                   </li>
                 </ul>
               </div>
@@ -315,10 +315,10 @@ export function HelpTab({
               </div>
               <div className="text-(--text-secondary) leading-relaxed space-y-1 text-[10.5px]">
                 <p>
-                  • <strong>单运营商或全量赛道</strong>：不受影响，直接根据服务器当前配置的单条线路进行稳定性打分与横向排行。
+                  • <strong>单运营商或全量赛道</strong>：继续按所选赛道筛选后端的公开任务统计。
                 </p>
                 <p>
-                  • <strong>三网综合赛道（默认）</strong>：三网评选必须依赖多线路数据。若关闭了多线模式，卡片会即时提示 <code>未启用多线模式</code> 并进入待机；只需在稳定评分设置中切换为「全量」赛道或重新开启多线模式即可恢复。
+                  • <strong>三网综合赛道（默认）</strong>：首页关闭多线模式时，卡片和排行榜会提示 <code>未启用多线模式</code>。重新开启多线模式，或选择仍可展示的单运营商或全量赛道。
                 </p>
               </div>
             </div>
@@ -507,7 +507,7 @@ export function HelpTab({
       keywords: ["大盘", "双曲线", "方块矩阵", "开屏动效", "切换", "矩阵"],
       renderAnswer: () => (
         <div className="mt-2.5 pt-2.5 border-t border-(--hairline) text-xs text-(--text-secondary) leading-relaxed">
-                      在设置菜单切换到「总览」，找到「Su-SAO 集群状态模块」区域，直接点击即可一键切换：「Su-SAO 趋势大盘」适合看整体网络流速与在线率趋势，「Su-SAO 方格矩阵」适合快速扫视每台机器是否正常。
+                      在设置菜单切换到「总览」，找到「{THEME_NAME} 集群状态模块」区域，直接点击即可一键切换：「{THEME_NAME} 趋势大盘」适合看整体网络流速与在线率趋势，「{THEME_NAME} 方格矩阵」适合快速扫视每台机器是否正常。
                     </div>
       ),
     },

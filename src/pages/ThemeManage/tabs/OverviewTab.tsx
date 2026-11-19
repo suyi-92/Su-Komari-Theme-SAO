@@ -1,5 +1,6 @@
 import { Layers, Palette, LayoutGrid, Activity, Sparkles, RotateCcw } from "lucide-react";
 import { clsx } from "clsx";
+import { THEME_NAME } from "@/utils/themeIdentity";
 import { InstancePanel } from "@/components/instance/InstancePanel";
 import { MatrixPatternEditor } from "@/components/matrix/MatrixPatternEditor";
 import { ToggleRow } from "../components/SettingControls";
@@ -151,9 +152,9 @@ export function OverviewTab({
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 mb-4 border-b border-(--hairline)">
                 <div className="min-w-0">
                   <div className="text-xs font-semibold text-(--text-primary) flex items-center gap-1.5">
-                    <span>Su-SAO 集群状态模块</span>
+                    <span>{THEME_NAME} 集群状态模块</span>
                     <span className="text-[10px] font-bold px-1.5 py-0.5 rounded border border-(--hairline) bg-(--bg-card) text-(--accent-500)">
-                      {draft.clusterOverviewMode === "nodes" ? "Su-SAO 方格矩阵" : "Su-SAO 趋势大盘"}
+                      {draft.clusterOverviewMode === "nodes" ? `${THEME_NAME} 方格矩阵` : `${THEME_NAME} 趋势大盘`}
                     </span>
                   </div>
                   <p className="text-[11px] text-(--text-muted) mt-0.5">
@@ -166,13 +167,13 @@ export function OverviewTab({
                 {[
                   {
                     value: "classic" as const,
-                    label: "Su-SAO 趋势大盘",
+                    label: `${THEME_NAME} 趋势大盘`,
                     desc: "用平滑曲线实时展现整体在线率与上下行网络流速。",
                     icon: Layers,
                   },
                   {
                     value: "nodes" as const,
-                    label: "Su-SAO 方格矩阵",
+                    label: `${THEME_NAME} 方格矩阵`,
                     desc: "每台机器显示为一个方块，一眼看清哪台负载高或掉线。",
                     icon: LayoutGrid,
                   },
@@ -205,7 +206,7 @@ export function OverviewTab({
               {/* 当切换到「方格矩阵」时，直接在容器内展开专属定制项 */}
               {draft.clusterOverviewMode === "nodes" && (
                 <div className="mt-4 pt-4 border-t border-(--hairline) space-y-4">
-                  {/* 1. Su-SAO 主题开场动画 */}
+                  {/* 1. Su-Komari-Theme-SAO 主题开场动画 */}
                   <div>
                     <label className="flex items-center justify-between gap-3 cursor-pointer">
                       <div className="min-w-0">
@@ -354,7 +355,7 @@ export function OverviewTab({
                 <div className="min-w-0">
                   <div className="text-xs font-semibold text-(--text-primary) flex items-center gap-1.5">
                     <Activity size={14} className="text-(--accent-500)" />
-                    <span>Su-SAO 带宽评级徽章</span>
+                    <span>{THEME_NAME} 带宽评级徽章</span>
                     <span
                       className={clsx(
                         "text-[10px] font-bold px-1.5 py-0.5 rounded border border-(--hairline)",

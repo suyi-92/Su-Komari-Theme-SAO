@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
+import { THEME_NAME } from "@/utils/themeIdentity";
 import { Activity, HelpCircle, LayoutGrid, PackagePlus, RotateCcw, Settings, Sparkles, X } from "lucide-react";
 import { OverviewStatCard, type OverviewData } from "@/components/node/OverviewStatCard";
 import {
@@ -207,7 +208,7 @@ export function OverviewCardPool({
                       <div className="flex items-start justify-between gap-3 pb-3.5 mb-4 border-b border-(--hairline)">
                         <div className="min-w-0">
                           <div className="text-xs font-semibold text-(--text-primary) flex items-center gap-1.5">
-                            <span>Su-SAO 指标卡池模块</span>
+                            <span>{THEME_NAME} 指标卡池模块</span>
                             <span className="text-[10px] font-bold px-1.5 py-0.5 rounded border border-(--hairline) bg-(--bg-card) text-(--accent-500)">
                               固定 6 槽位
                             </span>

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { THEME_NAME } from "@/utils/themeIdentity";
 import { getRpc2Client, RpcResponseError } from "@/services/rpc2Client";
 import { HttpRequestError, isAccessDeniedError } from "@/services/requestErrors";
 import {
@@ -509,8 +510,8 @@ const degradeWarned = new Set<string>();
 export function warnDegradedOnce(key: string, message: string, details?: Record<string, unknown>) {
   if (degradeWarned.has(key)) return;
   degradeWarned.add(key);
-  if (details) console.warn(`[Su-SAO] ${message}`, details);
-  else console.warn(`[Su-SAO] ${message}`);
+  if (details) console.warn(`[${THEME_NAME}] ${message}`, details);
+  else console.warn(`[${THEME_NAME}] ${message}`);
 }
 
 function isMissingMetricMethod(error: unknown) {

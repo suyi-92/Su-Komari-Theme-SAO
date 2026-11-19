@@ -1,9 +1,9 @@
 {
-  "name": "su-sao",
+  "name": "su-komari-theme-sao",
   "private": true,
   "version": "2.1.0",
   "type": "module",
-  "description": "Su-SAO",
+  "description": "Su-Komari-Theme-SAO",
   "author": "suyi-92 (苏忆)",
   "scripts": {
     "dev": "vite",

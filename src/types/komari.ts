@@ -228,7 +228,7 @@ export interface ThemeSettings {
   matrixColorTheme?: MatrixColorTheme;
   /** 模拟数据填充空闲机位插槽。 */
   matrixMockFill?: boolean;
-  /** 是否启用方格矩阵 Su-SAO 主题开场动画（默认开启）。 */
+  /** 是否启用方格矩阵 Su-Komari-Theme-SAO 主题开场动画（默认开启）。 */
   matrixBootAnimation?: boolean;
   /** 开屏动效形式：laser-scan (激光横扫)、digital-rain (数码流雨)。 */
   matrixBootEffect?: MatrixBootEffect;

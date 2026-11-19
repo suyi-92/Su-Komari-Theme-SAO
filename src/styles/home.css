@@ -2834,7 +2834,7 @@
 }
 
 
-/* Su-SAO 正体开屏点阵动效：统一重置所有槽位与节点的底色、边框、透明度与动画，杜绝深浅不一 */
+/* Su-SAO 标识开屏点阵动效：统一重置所有槽位与节点的底色、边框、透明度与动画，杜绝深浅不一 */
 .mao-matrix-section .mao-heatmap-cell.is-sao-pixel,
 .mao-matrix-section .mao-heatmap-cell.is-sao-bg,
 .mao-matrix-section .mao-heatmap-cell.is-sao-unlit,

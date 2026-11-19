@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { THEME_NAME } from "@/utils/themeIdentity";
 import {
   Activity,
   ChevronDown,
@@ -212,7 +213,7 @@ export function ServerTab({
                   {[
                     {
                       value: "layered" as const,
-                      label: "Su-SAO 双层底座",
+                      label: `${THEME_NAME} 双层底座`,
                       badge: "LAYERED TRAY",
                       desc: "卡片分上下两层：上层看硬件运行状态，底座单独看网络延迟。",
                       icon: Layers,

@@ -1,12 +1,12 @@
-# Su-SAO
+# Su-Komari-Theme-SAO
 
 <p align="center">
   <strong>面向 Komari 的模块化服务器监控主题</strong>
 </p>
 
-Su-SAO 由 **suyi-92（苏忆）** 持续开发维护，源自 WAOR 的 [Komari-Theme-SAO](https://github.com/WAOR/Komari-Theme-SAO)。发布版本、安装标识和问题反馈均使用 **Su-SAO**。
+Su-Komari-Theme-SAO 由 **suyi-92（苏忆）** 持续开发维护，源自 WAOR 的 [Komari-Theme-SAO](https://github.com/WAOR/Komari-Theme-SAO)。Komari 安装标识为 `Su-SAO`。
 
-[下载安装包](https://github.com/suyi-92/Su-SAO/releases) · [提交反馈](https://github.com/suyi-92/Su-SAO/issues)
+[下载安装包](https://github.com/suyi-92/Su-Komari-Theme-SAO/releases) · [提交反馈](https://github.com/suyi-92/Su-Komari-Theme-SAO/issues)
 
 <p align="center">
   <img src="https://img.shields.io/badge/license-MIT-blue" alt="License">
@@ -27,7 +27,7 @@ Su-SAO 由 **suyi-92（苏忆）** 持续开发维护，源自 WAOR 的 [Komari-
 
 ### 🎨  2.0 特性
 * **全新透白磨砂与通透质感**：2.0 版本确立了高通透半透明磨砂毛玻璃主题基调，彻底告别单薄生硬的平面表现，深浅模式卡片均极具立体感；
-* **Su-SAO 双层底座服务器卡片**：节点卡片引入全新立体双层底座形态，与LuminaPlus 经典卡片样式自由切换，信息聚合层次分明；
+* **Su-Komari-Theme-SAO 双层底座服务器卡片**：节点卡片引入全新立体双层底座形态，与LuminaPlus 经典卡片样式自由切换，信息聚合层次分明；
 * **指标数据图形化呈现**：总览指标小卡全面接入高精度数据微图（实时带宽波浪双曲线、今日流量 7h 出入站柱状图、平均 CPU 频谱律动柱等），支持指标卡片微图动/静态模式切换；
 * **三网丢包指标卡片**：电信、联通、移动分线透视，直观掌握骨干网丢包波动，右上角内嵌专属弹窗支持自由挑选参评节点；
 * **资产多币种汇率换算**：支持选择 CNY、USD、EUR 等结算货币并自动计算剩余价值；
@@ -46,12 +46,12 @@ Su-SAO 由 **suyi-92（苏忆）** 持续开发维护，源自 WAOR 的 [Komari-
 ### 🎮 集群状态双形态自由切换
 支持在主题管理中根据集群规模与偏好自由切换集群状态呈现方案：
 
-#### 〰️ 「Su-SAO 趋势大盘」
+#### 〰️ 「Su-Komari-Theme-SAO 趋势大盘」
 专为小集群打磨的集群状态呈现方案：
 * **分段式在线健康指示格**：单机一格映射存活状态，全站在线率一目了然；
 * **SVG 实时吞吐波形**：轻量贝塞尔实时曲线，内置自适应标尺算法，流畅呈现瞬带宽状态；
 
-#### 🔲 「Su-SAO 方格矩阵」
+#### 🔲 「Su-Komari-Theme-SAO 方格矩阵」
 专为大规模集群打造的高密度俯瞰热力看板：
 * **整屏机架热力**：突破趋势大盘的单行在线绿限制，单屏容纳上百台机器，溢出无缝垂直滚动；
 * **实时吞吐动态梯级**：单机方格根据对应服务器的实时吞吐呈现动态色彩梯级变幻；
@@ -63,7 +63,7 @@ Su-SAO 由 **suyi-92（苏忆）** 持续开发维护，源自 WAOR 的 [Komari-
 ---
 
 ### 🏷️ 节点高级彩色标签定制 (Radix Colors)
-各探针原生支持的色彩非常有限。Su-SAO 在前端层面全量引入并支持了完整的 [Radix UI Colors](https://www.radix-ui.com/themes/docs/theme/color) 调色板，可在后台为线路或节点自由指定丰富的高定专属色彩：
+各探针原生支持的色彩非常有限。Su-Komari-Theme-SAO 在前端层面全量引入并支持了完整的 [Radix UI Colors](https://www.radix-ui.com/themes/docs/theme/color) 调色板，可在后台为线路或节点自由指定丰富的高定专属色彩：
 
 * **🌸 Komari 端指定语法**：在后台节点标签中填写 `标签名<颜色>`，多标签用分号 `;` 分隔：
   ```text
@@ -125,7 +125,7 @@ https://github.com/user-attachments/assets/0540209f-442d-4977-b872-ff04821e0843
 
 ---
 
-## 🧩 Su-SAO 与上游系列的其他平台
+## 🧩 Su-Komari-Theme-SAO 与上游系列的其他平台
 
 | 核心特性 / 维度               |                         🌸 Komari 端                          |                      ⚡ 极简探针端                       |                  ☁️ CFSM 端                   |
 | :---------------------- | :----------------------------------------------------------: | :------------------------------------------------: | :------------------------------------------: |
@@ -150,7 +150,7 @@ https://github.com/user-attachments/assets/0540209f-442d-4977-b872-ff04821e0843
 | **资产隐蔽保护**              |                             ✅ 支持                             |                        ✅ 支持                        |                     ✅ 支持                     |
 | **节点标签自定义色彩**           |                     🏷️ 指定色彩 (`标签<颜色>`)                      |                     ⏳ 待后端开放接口                      |              🏷️ 指定色彩 (`标签-颜色`)              |
 | **部署方式**                |                     上传发布页的 ZIP                      |                 填入仓库地址一键安装 / 上传压缩包                 |             主题商店搜索一键启用 / 仓库地址安装              |
-| **项目地址**                | [Su-SAO](https://github.com/suyi-92/Su-SAO) | [Monitor-SAO](https://github.com/WAOR/Monitor-SAO) | [CFSM-SAO](https://github.com/WAOR/CFSM-SAO) |
+| **项目地址**                | [Su-Komari-Theme-SAO](https://github.com/suyi-92/Su-Komari-Theme-SAO) | [Monitor-SAO](https://github.com/WAOR/Monitor-SAO) | [CFSM-SAO](https://github.com/WAOR/CFSM-SAO) |
 
 ---
 
@@ -182,9 +182,9 @@ https://github.com/user-attachments/assets/0540209f-442d-4977-b872-ff04821e0843
 
 ## 🚀 安装与部署
 
-### Komari 安装 Su-SAO
+### Komari 安装 Su-Komari-Theme-SAO
 
-在 [Su-SAO 发布页](https://github.com/suyi-92/Su-SAO/releases) 下载 `Su-SAO-vX.Y.Z.zip`，到 Komari 管理后台的「主题管理」上传。首次安装可直接启用 Su-SAO。
+在 [发布页](https://github.com/suyi-92/Su-Komari-Theme-SAO/releases) 下载对应版本的主题 ZIP。v2.1.0 的文件为 `Su-SAO-v2.1.0.zip`。在 Komari 管理后台的「主题管理」上传后启用主题。已保存的 `Su-SAO` 配置会随安装标识继续使用。
 
 ### 从 SAO 迁移主题设置
 
@@ -240,7 +240,7 @@ https://github.com/user-attachments/assets/0540209f-442d-4977-b872-ff04821e0843
 
 感谢以下优秀开源项目与社区贡献者的付出：
 
-* **[WAOR/Komari-Theme-SAO](https://github.com/WAOR/Komari-Theme-SAO)**：Su-SAO 的上游项目。
+* **[WAOR/Komari-Theme-SAO](https://github.com/WAOR/Komari-Theme-SAO)**：Su-Komari-Theme-SAO 的上游项目。
 * **[stqfdyr/komari-theme-Lumina](https://github.com/stqfdyr/komari-theme-Lumina)**：初代优雅主题开创者。
 * **[shanyang242/Komari-Theme-LuminaPlus](https://github.com/shanyang242/Komari-Theme-LuminaPlus)**：出色的功能增强分支与架构设计。
 * **[volcano-1025/CFSM-Theme-LuminaPlus](https://github.com/volcano-1025/CFSM-Theme-LuminaPlus)**：CFSM 平台的早期移植探索。
@@ -252,4 +252,4 @@ https://github.com/user-attachments/assets/0540209f-442d-4977-b872-ff04821e0843
 
 ## 📄 开源许可证
 
-Su-SAO 以 [MIT License](LICENSE) 开源发布，保留上游版权与许可证。
+Su-Komari-Theme-SAO 以 [MIT License](LICENSE) 开源发布，保留上游版权与许可证。

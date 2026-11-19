@@ -1,4 +1,4 @@
-/* Su-SAO 共享表面样式 */
+/* Su-Komari-Theme-SAO 共享表面样式 */
 
 .surface-inset {
   background: var(--surface-sunken);
@@ -1883,6 +1883,50 @@
 
 .instance-ping-task[data-visible="false"] {
   opacity: 0.4;
+}
+
+.instance-ping-loss-bands {
+  margin-top: 12px;
+}
+
+.instance-ping-loss-row {
+  position: relative;
+  display: grid;
+  align-items: center;
+  min-height: 12px;
+}
+
+.instance-ping-loss-label {
+  min-width: 0;
+  padding-right: 8px;
+  overflow: hidden;
+  color: var(--text-secondary);
+  font-size: 10px;
+  line-height: 1.2;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.instance-ping-loss-track {
+  position: relative;
+  height: 7px;
+  border-radius: 999px;
+  cursor: crosshair;
+  touch-action: pan-y pinch-zoom;
+}
+
+.instance-ping-loss-track:focus-visible {
+  outline: 2px solid var(--text-secondary);
+  outline-offset: 2px;
+}
+
+.instance-ping-loss-cursor {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  border-left: 1px solid var(--text-primary);
+  pointer-events: none;
 }
 
 .instance-empty {
