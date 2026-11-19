@@ -271,11 +271,7 @@
   padding: 0;
 }
 
-.floating-control-tooltip {
-  position: absolute;
-  z-index: 2;
-  top: calc(100% + 8px);
-  left: 50%;
+.surface-tooltip {
   width: max-content;
   max-width: min(150px, calc(100vw - 24px));
   padding: 4px 8px;
@@ -288,9 +284,32 @@
   font-weight: 600;
   line-height: 1.4;
   text-align: center;
-  transform: translateX(-50%);
   pointer-events: none;
+}
+
+.floating-control-tooltip {
+  position: absolute;
+  z-index: 2;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
   visibility: hidden;
+}
+
+.node-label-tooltip {
+  position: fixed;
+  z-index: 45;
+  max-width: min(320px, calc(100% - 24px));
+  overflow-wrap: anywhere;
+}
+
+[data-node-label-tooltip]:focus-visible {
+  outline-offset: -2px;
+}
+
+.dstatus-price-chip[data-node-label-tooltip] > svg,
+.mini-node-price-tag[data-node-label-tooltip] > svg {
+  pointer-events: none;
 }
 
 .floating-controls-actions .floating-control:first-child .floating-control-tooltip {

@@ -50,7 +50,7 @@ function Shortcut({ hint, children }: { hint: string; children: ReactNode }) {
   return (
     <span className="floating-control">
       {children}
-      <span className="floating-control-tooltip" aria-hidden>{hint}</span>
+      <span className="surface-tooltip floating-control-tooltip" aria-hidden>{hint}</span>
     </span>
   );
 }

@@ -61,6 +61,7 @@ import {
 import { CompactNodeCard } from "./CompactNodeCard";
 import { MiniNodeCard } from "./MiniNodeCard";
 import { NodeCard } from "./NodeCard";
+import { NodeLabelTooltip } from "./NodeLabelTooltip";
 import { OverviewTrafficChart } from "./OverviewTrafficChart";
 import { ClusterHeatmap } from "./ClusterHeatmap";
 import { NodeListView } from "./NodeListView";
@@ -625,6 +626,7 @@ const RegionTabs = memo(function RegionTabs({
 let hasMountedHomeCards = false;
 
 export function NodeGrid() {
+  const tooltipScopeRef = useRef<HTMLElement>(null);
   const now = useHourlyClock();
   const queryClient = useQueryClient();
   const { pathname, search, hash, state } = useLocation();
@@ -1247,6 +1249,7 @@ export function NodeGrid() {
         palette={themeSettings.matrixColorTheme || "default"}
       />
       <section
+        ref={tooltipScopeRef}
         className="mao-cluster-card"
         aria-label="服务器集群与监控列表"
         data-palette={themeSettings.matrixColorTheme || "default"}
@@ -1300,6 +1303,7 @@ export function NodeGrid() {
         ) : (
           gridElement
         )}
+        <NodeLabelTooltip scopeRef={tooltipScopeRef} />
       </section>
     </>
   );

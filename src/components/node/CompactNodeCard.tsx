@@ -43,6 +43,7 @@ import {
 } from "./nodeCardShared";
 import { IpStackBadges } from "./IpStackBadges";
 import { NodeTodayTrafficPopover } from "./NodeTodayTrafficPopover";
+import { nodeLabelTooltipProps } from "./NodeLabelTooltip";
 import type {
   NodeInfo,
   NodeMetrics,
@@ -386,20 +387,19 @@ function CompactNodeChips({
   ipv4?: string | null;
   ipv6?: string | null;
 }) {
-  // 完整 tag 列表挂在 lane 的 tooltip 上;chip 不带自己的 title,hover 会穿透到 lane 上 ——
-  // 被裁剪 lane 折行挤出去的 tag 就靠这个保持可见,不用显示"+N"角标。
+  // 提示保留换行后被裁剪的标签。
   const tagTitle = joinTagTitle(tags);
 
   return (
     <div className="compact-node-chip-row">
       {subtitle && (
-        <span className="compact-node-subtitle" title={subtitle}>
+        <span className="compact-node-subtitle" {...nodeLabelTooltipProps(subtitle)}>
           {subtitle}
         </span>
       )}
       <IpStackBadges ipv4={ipv4} ipv6={ipv6} />
       {tags.length > 0 && (
-        <div className="compact-node-tag-lane" title={tagTitle}>
+        <div className="compact-node-tag-lane" {...nodeLabelTooltipProps(tagTitle, "lane")}>
           {tags.map((tag, index) => (
             <span
               key={`${tag.label}-${index}`}

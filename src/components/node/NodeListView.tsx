@@ -16,6 +16,7 @@ import { formatOsLabel, joinTagTitle, nodeDetailLinkLabels } from "./nodeCardSha
 import { formatHealthBucketTooltip } from "./pingBucketText";
 import type { PingLatencyThresholds, PingOverviewTaskLoadState } from "@/types/komari";
 import { HomeInstanceLink } from "./HomeInstanceLink";
+import { nodeLabelTooltipProps } from "./NodeLabelTooltip";
 
 const GAUGE_SEGMENTS = 14;
 // 列表网络列的延迟柱数:比卡片(24)少,配窄列宽,柱子仍清晰可读。
@@ -301,7 +302,7 @@ const NodeRow = memo(function NodeRow({ uuid }: { uuid: string }) {
             </span>
           </div>
           {(renewalPrice || footerTags.length > 0) && (
-            <div className="node-list-chips" title={footerTags.length > 0 ? joinTagTitle(footerTags) : undefined}>
+            <div className="node-list-chips" {...nodeLabelTooltipProps(joinTagTitle(footerTags), "link-lane")}>
               {renewalPrice && (
                 <span className="dstatus-price-chip">
                   <CircleDollarSign size={12} strokeWidth={2.2} />

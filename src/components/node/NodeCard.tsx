@@ -47,6 +47,7 @@ import { clsx } from "clsx";
 import type { NodeInfo, NodeMetrics, PingLatencyThresholds, PingOverviewBucket, PingOverviewItem, TrafficTrendSample } from "@/types/komari";
 import type { ByteRateDisplay } from "@/utils/format";
 import { HomeInstanceLink } from "./HomeInstanceLink";
+import { nodeLabelTooltipProps } from "./NodeLabelTooltip";
 
 type NodeCardNode = NodeInfo & NodeMetrics;
 type DisplayStat = { value: string; unit: string };
@@ -255,7 +256,7 @@ function NodeCardHeader({
         {(subtitle || node.ipv4 || node.ipv6) && (
           <div className="server-card-subtitle-row">
             {subtitle && (
-              <span className="server-card-subtitle" title={subtitle}>
+              <span className="server-card-subtitle" {...nodeLabelTooltipProps(subtitle)}>
                 {subtitle}
               </span>
             )}
@@ -696,9 +697,7 @@ const NodeHealthSection = memo(function NodeHealthSection({
   );
 });
 
-// 可见 footer 行和屏外测量行共用,免得改样式时两边走样。本身不带 title:可见行的
-// title 已经挂了完整 tag 列表,chip 不带 title 时 hover 会穿透到那一行,于是 hover
-// 任意 chip 都能看到全部 tag(包括 fit 阶段被丢掉的),而不只是这个 chip 的 label。
+// 可见行和屏外测量行共用标签样式。悬浮任一标签时,由可见行提供完整列表。
 function FooterTagChip({ tag }: { tag: DisplayTag }) {
   return (
     <span
@@ -711,11 +710,11 @@ function FooterTagChip({ tag }: { tag: DisplayTag }) {
   );
 }
 
-function FooterPriceChip({ renewalPrice, titled }: { renewalPrice: string; titled?: boolean }) {
+function FooterPriceChip({ renewalPrice, showTooltip }: { renewalPrice: string; showTooltip?: boolean }) {
   return (
     <span
       className="dstatus-price-chip"
-      title={titled ? `续费价格 ${renewalPrice}` : undefined}
+      {...nodeLabelTooltipProps(showTooltip ? `续费价格 ${renewalPrice}` : undefined)}
     >
       <CircleDollarSign size={12} strokeWidth={2.2} />
       {renewalPrice}
@@ -742,8 +741,7 @@ function NodeCardFooter({
   const measureRef = useRef<HTMLDivElement>(null);
   const [visibleTagCount, setVisibleTagCount] = useState(footerTags.length);
   const visibleTags = footerTags.slice(0, visibleTagCount);
-  // 完整 tag 列表挂在这一行的 tooltip 上;chip 不带自己的 title,hover 会穿透到行上 ——
-  // fit 阶段丢掉的 tag 就靠这个保持可见,不用显示"+N"角标。
+  // 提示保留因宽度限制而隐藏的标签。
   const tagTitle = joinTagTitle(footerTags);
 
   useLayoutEffect(() => {
@@ -827,11 +825,11 @@ function NodeCardFooter({
       )}
       {showTags && (
         <>
-          <div className="dstatus-tags-row" ref={rowRef} title={footerTags.length > 0 ? tagTitle : undefined}>
+          <div className="dstatus-tags-row" ref={rowRef} {...nodeLabelTooltipProps(tagTitle, "lane")}>
             {visibleTags.map((tag, index) => (
               <FooterTagChip key={`${tag.label}-${index}`} tag={tag} />
             ))}
-            {renewalPrice && <FooterPriceChip renewalPrice={renewalPrice} titled />}
+            {renewalPrice && <FooterPriceChip renewalPrice={renewalPrice} showTooltip />}
           </div>
           <div className="dstatus-tags-row dstatus-tags-measure" ref={measureRef} aria-hidden>
             {footerTags.map((tag, index) => (

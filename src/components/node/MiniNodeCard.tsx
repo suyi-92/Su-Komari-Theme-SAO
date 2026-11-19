@@ -30,6 +30,7 @@ import { formatHealthBucketTooltip } from "./pingBucketText";
 import { formatBytes, type ByteRateDisplay } from "@/utils/format";
 import type { NodeInfo, NodeMetrics, PingLatencyColors, PingLatencyThresholds, PingOverviewItem, PingOverviewBucket } from "@/types/komari";
 import { HomeInstanceLink } from "./HomeInstanceLink";
+import { nodeLabelTooltipProps } from "./NodeLabelTooltip";
 
 // 迷你卡固定为巡检布局，不跟随紧凑卡的可选指标开关；数据仍走共享模型。
 const HEALTH_BAR_COUNT = 24;
@@ -83,14 +84,14 @@ function MiniChips({
   return (
     <div className="mini-node-chip-row">
       {renewalPrice && (
-        <span className="mini-node-price-tag" title={`续费价格 ${renewalPrice}`}>
+        <span className="mini-node-price-tag" {...nodeLabelTooltipProps(`续费价格 ${renewalPrice}`)}>
           <CircleDollarSign size={11} strokeWidth={2.2} />
           {renewalPrice}
         </span>
       )}
       <IpStackBadges ipv4={ipv4} ipv6={ipv6} />
       {tags.length > 0 && (
-        <div className="mini-node-tag-lane" title={tagTitle}>
+        <div className="mini-node-tag-lane" {...nodeLabelTooltipProps(tagTitle, "lane")}>
           {tags.map((tag, index) => (
             <span key={`${tag.label}-${index}`} className="mini-node-tag" data-tag={tag.color}>
               {tag.label}
