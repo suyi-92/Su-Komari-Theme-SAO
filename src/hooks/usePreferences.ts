@@ -3,7 +3,12 @@ import { useThemeSettings } from "@/hooks/useThemeSettings";
 import { subscribeMediaQuery } from "@/utils/mediaQuery";
 import { isAppearance, type Appearance } from "@/utils/themeSettings";
 
-type ResolvedAppearance = "light" | "dark";
+type ResolvedAppearance = Exclude<Appearance, "system">;
+const APPEARANCE_BACKGROUND: Record<ResolvedAppearance, string> = {
+  dark: "#09090b",
+  light: "#f4f5f7",
+  white: "#ffffff",
+};
 const APPEARANCE_STORAGE_KEY = "appearance";
 const APPEARANCE_DEFAULT_STORAGE_KEY = "appearance_default";
 const SYSTEM_DARK_QUERY = "(prefers-color-scheme: dark)";
@@ -108,14 +113,15 @@ function markThemeFlip() {
 function applyResolvedAppearance(resolvedAppearance: ResolvedAppearance) {
   const root = document.documentElement;
   root.dataset.appearance = resolvedAppearance;
-  root.style.colorScheme = resolvedAppearance;
   const isDark = resolvedAppearance === "dark";
-  const color = isDark ? "#09090b" : "#f4f5f7";
+  const colorScheme = isDark ? "dark" : "light";
+  const color = APPEARANCE_BACKGROUND[resolvedAppearance];
+  root.style.colorScheme = colorScheme;
 
   root.style.backgroundColor = color;
   if (document.body) {
     document.body.style.backgroundColor = color;
-    document.body.style.colorScheme = resolvedAppearance;
+    document.body.style.colorScheme = colorScheme;
   }
 
   // Directly update the sticky navbar so Safari can immediately sample the

@@ -3,11 +3,8 @@ import {
   CircleDollarSign,
   HelpCircle,
   ListFilter,
-  Moon,
   Server,
   Sliders,
-  Sun,
-  SunMoon,
   Square,
   LayoutGrid,
   Grid3x3,
@@ -202,12 +199,6 @@ export const TRAFFIC_SPECTRUM_ANCHOR_CONFIG = [
     hint: "临近或已耗尽，末端绝对保证警报红",
     defaultColor: DEFAULT_TRAFFIC_SPECTRUM_COLORS.end,
   },
-] as const;
-
-export const APPEARANCE_OPTIONS = [
-  { value: "light", label: "浅色", icon: Sun },
-  { value: "system", label: "跟随系统", icon: SunMoon },
-  { value: "dark", label: "深色", icon: Moon },
 ] as const;
 
 export const NODE_VIEW_MODE_OPTIONS = [

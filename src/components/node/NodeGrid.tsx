@@ -1,5 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   Activity,
   Server,
@@ -88,6 +89,8 @@ type MiniGridStyle = CSSProperties & { "--mini-card-min-width": string };
 
 // 标准 UUID 不含逗号，可安全拼成稳定签名。
 const UUID_KEY_SEPARATOR = ",";
+const HOME_GROUP_PARAM = "homeGroup";
+const HOME_REGION_PARAM = "homeRegion";
 
 type IdleCapableWindow = Window & {
   requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
@@ -623,6 +626,9 @@ let hasMountedHomeCards = false;
 export function NodeGrid() {
   const now = useHourlyClock();
   const queryClient = useQueryClient();
+  const { pathname, search, hash, state } = useLocation();
+  const navigate = useNavigate();
+  const homeParams = useMemo(() => new URLSearchParams(search), [search]);
   const nodes = useHomeNodeSummaries();
   const nodeOnlineSummaries = useNodeOnlineSummaries();
   const allMeta = useAllNodeMeta();
@@ -637,8 +643,8 @@ export function NodeGrid() {
   const sortEnabled = themeSettings.isReady && themeSettings.enableHomeSort;
   const sortField = sortEnabled ? sort.field : themeSettings.homeSortField;
   const sortDirection = sortEnabled ? sort.direction : themeSettings.homeSortDirection;
-  const [selectedGroup, setSelectedGroup] = useState(HOME_ALL_GROUP);
-  const [selectedRegion, setSelectedRegion] = useState(HOME_ALL_REGION);
+  const requestedGroup = homeParams.get(HOME_GROUP_PARAM) ?? HOME_ALL_GROUP;
+  const requestedRegion = homeParams.get(HOME_REGION_PARAM) ?? HOME_ALL_REGION;
   useHomepagePingOverview(mode);
 
   // 仅首次打开首页时延后一帧挂载卡片。再次进入时，滚动恢复需要完整的页面高度。
@@ -1032,6 +1038,10 @@ export function NodeGrid() {
       ),
     [visibleNodes, themeSettings.homeGroupOrder, themeSettings.isReady],
   );
+  const selectedGroup =
+    themeSettings.showGroupTabs && groupOptions.includes(requestedGroup)
+      ? requestedGroup
+      : HOME_ALL_GROUP;
   const groupFilteredNodes = useMemo(
     () =>
       selectedGroup === HOME_ALL_GROUP
@@ -1044,6 +1054,10 @@ export function NodeGrid() {
     () => getHomeRegionOptions(groupFilteredNodes),
     [groupFilteredNodes],
   );
+  const selectedRegion =
+    themeSettings.showRegionBar && regionOptions.some((option) => option.code === requestedRegion)
+      ? requestedRegion
+      : HOME_ALL_REGION;
   const filteredNodes = useMemo(
     () =>
       selectedRegion === HOME_ALL_REGION
@@ -1060,34 +1074,28 @@ export function NodeGrid() {
     priceByUuid,
   });
 
-  useEffect(() => {
-    if (selectedGroup !== HOME_ALL_GROUP && !groupOptions.includes(selectedGroup)) {
-      setSelectedGroup(HOME_ALL_GROUP);
-    }
-  }, [groupOptions, selectedGroup]);
-
-  // 选中的地区在当前分组里不存在了(切换分组/节点变化)就回到全部。
-  useEffect(() => {
-    if (
-      selectedRegion !== HOME_ALL_REGION &&
-      !regionOptions.some((option) => option.code === selectedRegion)
-    ) {
-      setSelectedRegion(HOME_ALL_REGION);
-    }
-  }, [regionOptions, selectedRegion]);
-
-  // 地区栏被配置关闭(热更新)时,清掉可能残留的地区筛选,否则会留下一个不可见的过滤条件。
-  useEffect(() => {
-    if (!themeSettings.showRegionBar && selectedRegion !== HOME_ALL_REGION) {
-      setSelectedRegion(HOME_ALL_REGION);
-    }
-  }, [themeSettings.showRegionBar, selectedRegion]);
+  const updateFilters = useCallback((group: string, region: string) => {
+    const next = new URLSearchParams(homeParams);
+    if (group === HOME_ALL_GROUP) next.delete(HOME_GROUP_PARAM);
+    else next.set(HOME_GROUP_PARAM, group);
+    if (region === HOME_ALL_REGION) next.delete(HOME_REGION_PARAM);
+    else next.set(HOME_REGION_PARAM, region);
+    const nextSearch = next.toString();
+    if (nextSearch === homeParams.toString()) return;
+    // 筛选属于当前首页历史项，筛选操作本身不新增后退步骤。
+    void navigate(
+      { pathname, search: nextSearch, hash },
+      { replace: true, preventScrollReset: true, state },
+    );
+  }, [hash, homeParams, navigate, pathname, state]);
 
   useEffect(() => {
-    if (!themeSettings.showGroupTabs && selectedGroup !== HOME_ALL_GROUP) {
-      setSelectedGroup(HOME_ALL_GROUP);
+    // 登录状态和节点列表到齐后，才能判断过滤条件是否已经失效。
+    if (!themeSettings.isReady || !storeHydrated || !me) return;
+    if (requestedGroup !== selectedGroup || requestedRegion !== selectedRegion) {
+      updateFilters(selectedGroup, selectedRegion);
     }
-  }, [themeSettings.showGroupTabs, selectedGroup]);
+  }, [me, requestedGroup, requestedRegion, selectedGroup, selectedRegion, storeHydrated, themeSettings.isReady, updateFilters]);
 
   // 卡片列表只随 UUID 集合/顺序变化；卡片内部各自订阅实时数据。
   const uuidsKey = useMemo(
@@ -1268,7 +1276,7 @@ export function NodeGrid() {
               <GroupTabs
                 groups={groupOptions}
                 selectedGroup={selectedGroup}
-                onSelectGroup={setSelectedGroup}
+                 onSelectGroup={(group) => updateFilters(group, selectedRegion)}
               />
             )}
             {!showHomeOverview && showHomeSort && <HomeSortControl state={sort} />}
@@ -1278,7 +1286,7 @@ export function NodeGrid() {
           <RegionTabs
             regions={regionOptions}
             selectedRegion={selectedRegion}
-            onSelectRegion={setSelectedRegion}
+             onSelectRegion={(region) => updateFilters(selectedGroup, region)}
           />
         )}
         {isList ? (

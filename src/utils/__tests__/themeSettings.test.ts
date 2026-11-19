@@ -3,6 +3,19 @@ import { DEFAULT_PING_LATENCY_THRESHOLDS, normalizeThemeSettings } from "@/utils
 import { draftFromSettings, draftToThemeSettings } from "@/pages/ThemeManage/utils";
 
 describe("normalizeThemeSettings", () => {
+  it("defaults server connection counts on and preserves a saved opt-out", () => {
+    expect(normalizeThemeSettings({}).showConnections).toBe(true);
+    const draft = draftFromSettings(normalizeThemeSettings({ showConnections: false }));
+    expect(draftToThemeSettings(draft).showConnections).toBe(false);
+  });
+
+  it("retains all supported default appearances when saving settings", () => {
+    for (const appearance of ["system", "light", "dark", "white"] as const) {
+      const draft = draftFromSettings(normalizeThemeSettings({ defaultAppearance: appearance }));
+      expect(draftToThemeSettings(draft).defaultAppearance).toBe(appearance);
+    }
+  });
+
   it("defaults stability scoring to IPv4 and preserves explicit IPv6 choices when saving", () => {
     expect(normalizeThemeSettings({ yesterdayBestScope: "all" })).toMatchObject({
       yesterdayBestScope: "all",

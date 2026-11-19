@@ -6,6 +6,7 @@ import { InstanceDetails } from "@/components/instance/InstanceDetails";
 import { PingChart } from "@/components/instance/PingChart";
 import { LoadChart } from "@/components/instance/LoadChart";
 import { Spinner } from "@/components/ui/Spinner";
+import type { HomeInstanceState } from "@/components/node/HomeInstanceLink";
 import {
   buildLoadTimeRangeOptions,
   buildPingTimeRangeOptions,
@@ -20,11 +21,12 @@ type TimeRangeOption = ReturnType<typeof buildLoadTimeRangeOptions>[number];
 function InstanceHomeLink() {
   const { state } = useLocation();
   const navigate = useNavigate();
-  const homeHistorySteps: number | undefined = state?.homeHistorySteps;
+  const fromHome: HomeInstanceState | null = state;
+  const homeHistorySteps = fromHome?.homeHistorySteps;
 
   return (
     <Link
-      to="/"
+      to={{ pathname: "/", search: fromHome?.homeSearch, hash: fromHome?.homeHash }}
       className="instance-page-back"
       onClick={(event) => {
         if (

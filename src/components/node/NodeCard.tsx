@@ -155,13 +155,13 @@ export const NodeCard = memo(function NodeCard({
                     icon={<Network size={13} strokeWidth={2} />}
                     label="TCP 连接"
                     value={node.connectionsTcp.toLocaleString()}
-                    color="var(--progress-network)"
+                    color="var(--connection-color, var(--progress-network))"
                   />
                   <FooterStat
                     icon={<Network size={13} strokeWidth={2} />}
                     label="UDP 连接"
                     value={node.connectionsUdp.toLocaleString()}
-                    color="var(--progress-network)"
+                    color="var(--connection-color, var(--progress-network))"
                   />
                 </div>
               )}
@@ -247,13 +247,13 @@ export const NodeCard = memo(function NodeCard({
                 icon={<Network size={13} strokeWidth={2} />}
                 label="TCP 连接"
                 value={node.connectionsTcp.toLocaleString()}
-                color="var(--progress-network)"
+                color="var(--connection-color, var(--progress-network))"
               />
               <FooterStat
                 icon={<Network size={13} strokeWidth={2} />}
                 label="UDP 连接"
                 value={node.connectionsUdp.toLocaleString()}
-                color="var(--progress-network)"
+                color="var(--connection-color, var(--progress-network))"
               />
             </div>
           )}

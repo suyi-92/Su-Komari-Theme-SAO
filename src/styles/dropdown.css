@@ -34,6 +34,17 @@
   background: transparent;
 }
 
+.dropdown-trigger[data-variant="shortcut"] {
+  border-color: var(--border);
+  border-radius: 50%;
+  background: var(--surface);
+}
+
+.dropdown-trigger[data-variant="shortcut"]:hover {
+  border-color: var(--border-strong);
+  background: var(--hover-bg);
+}
+
 .dropdown-trigger:focus-visible {
   outline: 2px solid var(--accent-500);
   outline-offset: 2px;

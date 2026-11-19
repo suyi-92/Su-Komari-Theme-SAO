@@ -34,7 +34,7 @@ import {
   type HomepagePingTaskBindings,
 } from "@/utils/pingTasks";
 
-export type Appearance = "system" | "light" | "dark";
+export type Appearance = NonNullable<ThemeSettings["defaultAppearance"]>;
 export type NodeViewMode = "large" | "compact" | "mini" | "list";
 export type ServerCardTemplate = "classic" | "layered";
 export const SERVER_CARD_TEMPLATES: readonly ServerCardTemplate[] = [
@@ -374,7 +374,7 @@ export const DEFAULT_THEME_SETTINGS: ResolvedThemeSettings = {
   compactShowTrafficTotal: true,
   compactShowBilling: true,
   compactShowUptime: true,
-  showConnections: false,
+  showConnections: true,
   showTodayTrafficPopover: true,
   hiddenNodes: [],
   costIgnoredNodes: [],
@@ -389,7 +389,7 @@ export const DEFAULT_THEME_SETTINGS: ResolvedThemeSettings = {
 };
 
 export function isAppearance(value: unknown): value is Appearance {
-  return value === "system" || value === "light" || value === "dark";
+  return value === "system" || value === "light" || value === "dark" || value === "white";
 }
 
 function normalizeAppearance(
@@ -727,8 +727,7 @@ export function normalizeThemeSettings(
     compactShowTrafficTotal: enabledUnlessFalse(settings?.compactShowTrafficTotal),
     compactShowBilling: enabledUnlessFalse(settings?.compactShowBilling),
     compactShowUptime: enabledUnlessFalse(settings?.compactShowUptime),
-    // 默认关闭(需手动开启):连接数是个小众指标,很多 agent 也不上报,所以只在显式启用时才显示。
-    showConnections: settings?.showConnections === true,
+    showConnections: enabledUnlessFalse(settings?.showConnections),
     showTodayTrafficPopover: enabledUnlessFalse(settings?.showTodayTrafficPopover),
     hiddenNodes: normalizeNodeIdentityList(settings?.hiddenNodes),
     costIgnoredNodes: normalizeCostIgnoredNodes(settings?.costIgnoredNodes),

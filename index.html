@@ -104,7 +104,9 @@
             };
           }
         } catch {}
+      })();
 
+      (() => {
         try {
           const cachedTitle = localStorage.getItem("komaritheme:sitename");
           if (cachedTitle && cachedTitle.trim()) {
@@ -128,7 +130,7 @@
             setMeta('meta[name="twitter:description"]', cachedDesc.trim());
           }
         } catch {}
-        const appearances = new Set(["system", "light", "dark"]);
+        const appearances = new Set(["system", "light", "dark", "white"]);
         const readAppearance = (key) => {
           const raw = localStorage.getItem(key);
           if (raw == null) return null;
@@ -155,9 +157,9 @@
               : "light"
             : appearance;
         document.documentElement.dataset.appearance = resolved;
-        document.documentElement.style.colorScheme = resolved;
         const isDark = resolved === "dark";
-        const color = isDark ? "#09090b" : "#f4f5f7";
+        document.documentElement.style.colorScheme = isDark ? "dark" : "light";
+        const color = { dark: "#09090b", light: "#f4f5f7", white: "#ffffff" }[resolved];
         document.documentElement.style.backgroundColor = color;
         const metas = document.querySelectorAll('meta[name="theme-color"]');
         metas.forEach((el) => el.remove());

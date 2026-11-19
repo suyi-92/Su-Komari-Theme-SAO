@@ -27,7 +27,7 @@ type DropdownProps<Value extends string> = {
   title?: string;
   placeholder?: string;
   disabled?: boolean;
-  variant?: "field" | "toolbar" | "icon";
+  variant?: "field" | "toolbar" | "icon" | "shortcut";
   align?: "start" | "end";
   leadingIcon?: ReactNode;
   selectedIcon?: ReactNode;
@@ -103,6 +103,7 @@ export function Dropdown<Value extends string>({
   const isDisabled = disabled || options.length === 0;
   const expanded = open && !isDisabled;
   const activeIndex = activeOption ? options.indexOf(activeOption) : -1;
+  const iconOnly = variant === "icon" || variant === "shortcut";
 
   useLayoutEffect(() => {
     const trigger = triggerRef.current;
@@ -250,7 +251,7 @@ export function Dropdown<Value extends string>({
         type="button"
         role="combobox"
         id={id}
-        className="dropdown-trigger"
+        className={variant === "shortcut" ? "dropdown-trigger control-button" : "dropdown-trigger"}
         data-variant={variant}
         title={title}
         disabled={isDisabled}
@@ -266,10 +267,10 @@ export function Dropdown<Value extends string>({
         onKeyDown={handleKeyDown}
       >
         {leadingIcon}
-        <span className={variant === "icon" ? "sr-only" : "dropdown-trigger-label"}>
+        <span className={iconOnly ? "sr-only" : "dropdown-trigger-label"}>
           {selected?.label ?? placeholder}
         </span>
-        <ChevronDown size={14} className="dropdown-chevron" aria-hidden />
+        {variant !== "shortcut" && <ChevronDown size={14} className="dropdown-chevron" aria-hidden />}
       </button>
       {expanded && createPortal(
         <div

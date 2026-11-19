@@ -1,6 +1,7 @@
 import { LayoutTemplate, Compass } from "lucide-react";
 import { InstancePanel } from "@/components/instance/InstancePanel";
-import { APPEARANCE_OPTIONS } from "../constants";
+import { APPEARANCE_OPTIONS } from "@/components/shell/appearanceOptions";
+import type { Appearance } from "@/utils/themeSettings";
 import { ToggleRow } from "../components/SettingControls";
 import type { ThemeDraft } from "../types";
 
@@ -11,7 +12,7 @@ export function OtherTab({
 }: {
   draft: ThemeDraft;
   patch: <K extends keyof ThemeDraft>(key: K, value: ThemeDraft[K]) => void;
-  setAppearance: (value: "light" | "dark" | "system") => void;
+  setAppearance: (value: Appearance) => void;
 }) {
   return (
     <>
@@ -20,23 +21,25 @@ export function OtherTab({
         title="访客默认外观"
         aside={<LayoutTemplate size={16} />}
       >
-        <div className="instance-segmented is-prominent is-even">
-          {APPEARANCE_OPTIONS.map(({ value, label, icon: Icon }) => (
-            <button
-              key={value}
-              type="button"
-              data-active={draft.defaultAppearance === value ? "true" : "false"}
-              aria-pressed={draft.defaultAppearance === value}
-              onClick={() => {
-                patch("defaultAppearance", value);
-                setAppearance(value);
-              }}
-              className="inline-flex items-center justify-center gap-2"
-            >
-              <Icon size={14} />
-              <span>{label}</span>
-            </button>
-          ))}
+        <div className="setting-segment-slot">
+          <div className="instance-segmented is-prominent is-even">
+            {APPEARANCE_OPTIONS.map(({ value, label, icon: Icon }) => (
+              <button
+                key={value}
+                type="button"
+                data-active={draft.defaultAppearance === value ? "true" : "false"}
+                aria-pressed={draft.defaultAppearance === value}
+                onClick={() => {
+                  patch("defaultAppearance", value);
+                  setAppearance(value);
+                }}
+                className="inline-flex items-center justify-center gap-2"
+              >
+                <Icon size={14} />
+                <span>{label}</span>
+              </button>
+            ))}
+          </div>
         </div>
       </InstancePanel>
 

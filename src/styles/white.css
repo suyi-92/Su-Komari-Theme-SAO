@@ -1,0 +1,114 @@
+:root[data-appearance="white"] :is(
+  .mao-top-nav-bar,
+  .mao-dashboard-hero,
+  .mao-cluster-card,
+  .mao-stat-card,
+  .mao-progress-container,
+  .mao-progress-section,
+  .mao-network-section .mao-realtime-chart-card,
+  .instance-panel,
+  .instance-info-group,
+  .instance-chart-card,
+  .access-error-card
+) {
+  background: var(--surface);
+  border-color: var(--border);
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+:root[data-appearance="white"] :is(.mao-stat-card, .instance-chart-card):hover {
+  border-color: var(--border-strong);
+  transform: none;
+}
+
+:root[data-appearance="white"] :is(.home-group-tabs, .home-region-chip, .floating-controls .control-button) {
+  box-shadow: none;
+}
+
+:root[data-appearance="white"] .home-region-chip[aria-pressed="true"] {
+  color: var(--accent-strong);
+}
+
+:root[data-appearance="white"] .floating-controls .control-button {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+:root[data-appearance="white"] :is(.server-card, .compact-node-card, .mini-node-card) {
+  background: var(--surface);
+  border-color: var(--border);
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+:root[data-appearance="white"] :is(.server-card, .compact-node-card, .mini-node-card):hover {
+  border-color: var(--border-strong);
+  transform: none;
+}
+
+:root[data-appearance="white"] :is(.server-card, .compact-node-card, .mini-node-card).is-layered {
+  padding: 0;
+  gap: 0;
+}
+
+:root[data-appearance="white"] .is-layered :is(
+  .server-card-layered-top,
+  .server-health-block,
+  .compact-node-health-item,
+  .mini-node-health-item
+) {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+:root[data-appearance="white"] .is-layered .server-card-layered-bottom {
+  margin: 0 12px;
+  padding: 8px 0 12px;
+  border-top: 1px solid var(--hairline);
+}
+
+:root[data-appearance="white"] :is(.compact-node-info-strip, .compact-node-card.is-layered .compact-node-info-strip) {
+  background: var(--surface-sunken);
+  border-color: var(--border);
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+:root[data-appearance="white"] .compact-node-card.is-layered .compact-node-info-tile + .compact-node-info-tile {
+  border-left-color: var(--border);
+}
+
+:root[data-appearance="white"] :is(.server-card, .compact-node-card, .mini-node-card).is-offline {
+  background: color-mix(in srgb, var(--status-error) 4%, var(--surface));
+  border-color: color-mix(in srgb, var(--status-error) 42%, var(--border));
+  filter: none;
+  opacity: 1;
+}
+
+:root[data-appearance="white"] .is-offline :is(.server-card-title-link, .compact-node-title, .mini-node-title) {
+  color: var(--status-offline);
+}
+
+:root[data-appearance="white"] .node-list-container.is-layered {
+  background: none;
+  border: 0;
+  padding: 0;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+:root[data-appearance="white"] .node-list.is-layered {
+  background: var(--surface);
+  border-color: var(--border);
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}

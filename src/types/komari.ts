@@ -194,7 +194,7 @@ export type ServerCardTemplate = "classic" | "layered";
 
 export interface ThemeSettings {
   [key: string]: unknown;
-  defaultAppearance?: "system" | "light" | "dark";
+  defaultAppearance?: "system" | "light" | "dark" | "white";
   desktopNodeViewMode?: "large" | "compact" | "mini" | "list";
   mobileNodeViewMode?: "large" | "compact" | "mini" | "list";
   serverCardTemplate?: ServerCardTemplate;

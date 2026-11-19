@@ -324,7 +324,7 @@ export function ServerTab({
                   <ToggleRow
                     field="showConnections"
                     title="连接数量"
-                    desc="在卡片网络区域标注实时网络连接数。"
+                    desc="在大卡和紧凑卡的网络区域显示实时 TCP 与 UDP 连接数。"
                     checked={draft.showConnections}
                     onPatch={patch}
                   />

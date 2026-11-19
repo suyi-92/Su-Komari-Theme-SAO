@@ -146,6 +146,23 @@
   --canvas-glow: none;
 }
 
+:root[data-appearance="white"] {
+  --bg-0: #ffffff;
+  --surface-bg: #ffffff;
+  --surface-elev: #ffffff;
+  --surface-sunken: #f7f7f8;
+  --border: #e5e5e9;
+  --border-subtle: #ededf0;
+  --border-strong: #d3d3da;
+  --hairline: #ededf0;
+  --hover-bg: #f5f5f7;
+  --text-tertiary: #66666f;
+  --status-success: #18774b;
+  --status-online: #18774b;
+  --status-offline: #b42318;
+  --connection-color: #047857;
+}
+
 :root[data-appearance="dark"] {
   --bg-0: #09090b;
   --surface-bg: #09090b;

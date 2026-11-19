@@ -491,6 +491,7 @@ function CompactNodeInfoStrip({
   return (
     <div
       className="compact-node-info-strip"
+      data-columns={infoTileCount}
       style={{ "--compact-info-columns": infoTileCount } as CSSProperties}
     >
       <CompactInfoTile
@@ -566,12 +567,12 @@ function CompactNodeInfoStrip({
         </CompactInfoTile>
       )}
       {showConnections && (
-        <CompactInfoTile label="连接数" color="var(--progress-network)">
+        <CompactInfoTile label="连接数" color="var(--connection-color, var(--progress-network))">
           <CompactInfoRow
             icon={<Network size={12} strokeWidth={2.1} />}
             label="TCP"
             value={node.connectionsTcp.toLocaleString()}
-            color="var(--progress-network)"
+            color="var(--connection-color, var(--progress-network))"
           />
           <CompactInfoRow
             icon={<Network size={12} strokeWidth={2.1} />}

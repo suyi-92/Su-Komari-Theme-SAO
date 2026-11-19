@@ -13,6 +13,7 @@
 @import "./os-logo.css";
 @import "./numeric.css";
 @import "./home-footer.css";
+@import "./white.css";
 
 @theme {
   --font-sans:

@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Dropdown } from "@/components/ui/Dropdown";
+import type { HomeInstanceState } from "@/components/node/HomeInstanceLink";
 import { useAuth } from "@/hooks/useAuth";
 import { useAllNodeMeta, useHomeNodeSummaries } from "@/hooks/useNode";
 import { useThemeSettings } from "@/hooks/useThemeSettings";
@@ -47,9 +48,11 @@ export function InstanceSwitcher({ currentUuid }: { currentUuid: string }) {
   if (options.length <= 1) return null;
 
   const select = (uuid: string) => {
-    const homeHistorySteps: number | undefined = state?.homeHistorySteps;
+    const fromHome: HomeInstanceState | null = state;
     navigate(`/instance/${encodeURIComponent(uuid)}`, {
-      state: homeHistorySteps ? { homeHistorySteps: homeHistorySteps + 1 } : undefined,
+      state: fromHome?.homeHistorySteps
+        ? { ...fromHome, homeHistorySteps: fromHome.homeHistorySteps + 1 }
+        : undefined,
     });
   };
 

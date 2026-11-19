@@ -180,7 +180,7 @@ function buildBaseOptions({
   title,
   keys,
   colors,
-  resolvedAppearance,
+  isDark,
   rangeHours,
   spanGaps,
   axisKind,
@@ -190,14 +190,13 @@ function buildBaseOptions({
   title: string;
   keys: string[];
   colors: string[];
-  resolvedAppearance: "light" | "dark";
+  isDark: boolean;
   rangeHours: number;
   spanGaps?: boolean;
   axisKind: "percent" | "network" | "count";
   axisSize?: number;
   xRange?: [number, number] | null;
 }): Omit<uPlot.Options, "width" | "height"> {
-  const isDark = resolvedAppearance === "dark";
   const { grid, text } = getAxisColors(isDark);
 
   return {
@@ -264,7 +263,7 @@ const ChartCard = memo(function ChartCard({
   points,
   keys,
   colors,
-  resolvedAppearance,
+  isDark,
   rangeHours,
   unit = "",
   spanGaps,
@@ -280,7 +279,7 @@ const ChartCard = memo(function ChartCard({
   points: ChartPoint[];
   keys: string[];
   colors: string[];
-  resolvedAppearance: "light" | "dark";
+  isDark: boolean;
   rangeHours: number;
   unit?: string;
   spanGaps?: boolean;
@@ -307,14 +306,14 @@ const ChartCard = memo(function ChartCard({
         title,
         keys,
         colors,
-        resolvedAppearance,
+        isDark,
         rangeHours,
         spanGaps,
         axisKind,
         axisSize,
         xRange,
       }),
-    [axisKind, axisSize, colors, keys, rangeHours, resolvedAppearance, spanGaps, title, xRange],
+    [axisKind, axisSize, colors, isDark, keys, rangeHours, spanGaps, title, xRange],
   );
 
   const enhancedOptions = useMemo<Omit<uPlot.Options, "width" | "height">>(() => {
@@ -398,6 +397,7 @@ export function LoadChart({
   const node = useNodeMetrics(uuid, isRealtime && active);
   const meta = useNodeMeta(uuid);
   const { resolvedAppearance } = usePreferences();
+  const isDark = resolvedAppearance === "dark";
   const [realtimePoints, setRealtimePoints] = useState<ChartPoint[]>([]);
   const [connectNulls, setConnectNulls] = useState(false);
   const totalFallbacks = useMemo(
@@ -572,7 +572,7 @@ export function LoadChart({
           points={points}
           keys={CPU_KEYS}
           colors={CPU_COLORS}
-          resolvedAppearance={resolvedAppearance}
+          isDark={isDark}
           rangeHours={hours}
           unit="%"
           spanGaps={connectNulls}
@@ -602,7 +602,7 @@ export function LoadChart({
           points={points}
           keys={MEMORY_KEYS}
           colors={MEMORY_COLORS}
-          resolvedAppearance={resolvedAppearance}
+          isDark={isDark}
           rangeHours={hours}
           unit="%"
           spanGaps={connectNulls}
@@ -624,7 +624,7 @@ export function LoadChart({
           points={points}
           keys={DISK_KEYS}
           colors={DISK_COLORS}
-          resolvedAppearance={resolvedAppearance}
+          isDark={isDark}
           rangeHours={hours}
           unit="%"
           spanGaps={connectNulls}
@@ -651,7 +651,7 @@ export function LoadChart({
           points={points}
           keys={NETWORK_KEYS}
           colors={NETWORK_COLORS}
-          resolvedAppearance={resolvedAppearance}
+          isDark={isDark}
           rangeHours={hours}
           spanGaps={connectNulls}
           axisKind="network"
@@ -673,7 +673,7 @@ export function LoadChart({
           points={points}
           keys={CONNECTION_KEYS}
           colors={CONNECTION_COLORS}
-          resolvedAppearance={resolvedAppearance}
+          isDark={isDark}
           rangeHours={hours}
           spanGaps={connectNulls}
           axisKind="count"
@@ -700,7 +700,7 @@ export function LoadChart({
           points={points}
           keys={PROCESS_KEYS}
           colors={PROCESS_COLORS}
-          resolvedAppearance={resolvedAppearance}
+          isDark={isDark}
           rangeHours={hours}
           spanGaps={connectNulls}
           axisKind="count"
