@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { InstancePanel } from "@/components/instance/InstancePanel";
 import { PROJECT_REPOS } from "../constants";
+import { THEME_NAME, THEME_URL } from "@/utils/themeIdentity";
 
 type FaqCategory = "all" | "network" | "asset" | "visual" | "general";
 
@@ -473,6 +474,20 @@ export function HelpTab({
       ),
     },
     {
+      id: "regional-latency",
+      category: "network",
+      categoryLabel: "网络测速",
+      q: "为什么同样的毫秒数在不同节点上显示不同颜色？",
+      keywords: ["延迟", "光柱", "地区", "阈值", "香港", "美西", "美东", "多线"],
+      renderAnswer: () => (
+        <div className="mt-2.5 pt-2.5 border-t border-(--hairline) text-xs text-(--text-secondary) leading-relaxed space-y-2">
+          <p>首页延迟颜色默认参考中国大陆到节点所在地区的往返时延。同为 150 ms，在美国西部属良好，在香港属极高。显示的毫秒数和丢包率仍来自各自的探测任务，线路、运营商与高峰时段会影响实际结果。</p>
+          <p>美国节点有明确的东西海岸或城市标识时使用对应分档，例如节点地区填为 <code>US-West</code>，或地区为 <code>US</code> 且节点名称包含 <code>Los Angeles</code>。海岸未知时使用美国通用分档。其他未知或未覆盖地区使用 60 / 100 / 160 / 200 ms。</p>
+          <p>可在「主题设置 → 服务器 → 延迟光柱」预览各地区门槛、修改每档颜色，或为所有节点设定统一门槛。</p>
+        </div>
+      ),
+    },
+    {
       id: "mini-card-slot",
       category: "network",
       categoryLabel: "网络测速",
@@ -492,7 +507,7 @@ export function HelpTab({
       keywords: ["大盘", "双曲线", "方块矩阵", "开屏动效", "切换", "矩阵"],
       renderAnswer: () => (
         <div className="mt-2.5 pt-2.5 border-t border-(--hairline) text-xs text-(--text-secondary) leading-relaxed">
-                      在设置菜单切换到「总览」，找到「SAO 集群状态模块」区域，直接点击即可一键切换：「SAO 趋势大盘」适合看整体网络流速与在线率趋势，「SAO 方格矩阵」适合快速扫视每台机器是否正常。
+                      在设置菜单切换到「总览」，找到「Su-SAO 集群状态模块」区域，直接点击即可一键切换：「Su-SAO 趋势大盘」适合看整体网络流速与在线率趋势，「Su-SAO 方格矩阵」适合快速扫视每台机器是否正常。
                     </div>
       ),
     },
@@ -765,7 +780,7 @@ export function HelpTab({
               >
                 <div className="space-y-4">
                   <p className="text-xs text-(--text-muted) leading-relaxed">
-                    SAO 主题目前适配了三大探针。为确保您的反馈能由对应仓库维护者快速跟进，请优先在当前使用的项目仓库中提交 Issue。
+                    请在当前使用的主题仓库中提交 Issue，以便对应项目的维护者跟进。
                   </p>
 
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
@@ -881,25 +896,25 @@ export function HelpTab({
               {/* 面板 4：关于与致谢 */}
               <InstancePanel
                 kicker="关于"
-                title="关于 SAO 主题"
+                title={`关于 ${THEME_NAME}`}
                 aside={<Sparkles size={16} />}
               >
                 <div className="rounded-2xl border border-(--hairline) bg-[color-mix(in_srgb,var(--bg-card)_55%,transparent)] p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-semibold text-(--text-primary)">
-                        Komari SAO Theme
+                        {THEME_NAME}
                       </span>
                       <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded border border-(--hairline) bg-(--bg-card) text-(--accent-500)">
                         {currentVersion}
                       </span>
                     </div>
                     <p className="text-xs text-(--text-muted)">
-                      服务于探针数据呈现本身的高自由度模块化主题
+                      由 suyi-92（苏忆）持续开发维护的 Komari 主题，源自 WAOR 的 Komari-Theme-SAO。
                     </p>
                   </div>
                   <a
-                    href="https://github.com/WAOR/Komari-Theme-SAO"
+                    href={THEME_URL}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold border border-(--hairline) bg-(--bg-card) text-(--text-primary) hover:border-(--accent-500) hover:text-(--accent-500) shadow-xs transition-colors shrink-0 cursor-pointer"

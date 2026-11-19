@@ -2,7 +2,7 @@ import { memo } from "react";
 
 /**
  * 首页磨砂骨架屏 (HomeSkeleton)
- * 在首屏数据尚未抵达前提供与真实 SAO 仪表盘严格对齐的立体占位骨架，
+ * 在首屏数据尚未抵达前提供与真实 Su-SAO 仪表盘严格对齐的立体占位骨架，
  * 消除空荡荡的白屏与转圈，实现视觉上的“即开即见”。
  */
 export const HomeSkeleton = memo(function HomeSkeleton() {

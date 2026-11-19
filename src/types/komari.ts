@@ -132,6 +132,8 @@ export interface UserMatrixPreset {
   createdAt: number;
 }
 
+export type PingLatencyMode = "regional" | "custom";
+
 export interface PingLatencyThresholds {
   excellent: number;
   good: number;
@@ -202,6 +204,7 @@ export interface ThemeSettings {
   enableHomepageMultiPing?: boolean;
   homepageMultiPingTaskIds?: number[];
   fakePingForUnbound?: boolean;
+  pingLatencyMode?: PingLatencyMode;
   pingLatencyThresholds?: Partial<PingLatencyThresholds>;
   pingLatencyColors?: Partial<PingLatencyColors>;
   pingLossThresholds?: Partial<PingLossThresholds>;
@@ -225,11 +228,11 @@ export interface ThemeSettings {
   matrixColorTheme?: MatrixColorTheme;
   /** 模拟数据填充空闲机位插槽。 */
   matrixMockFill?: boolean;
-  /** 是否启用方格矩阵 SAO 主题开场动画（默认开启）。 */
+  /** 是否启用方格矩阵 Su-SAO 主题开场动画（默认开启）。 */
   matrixBootAnimation?: boolean;
   /** 开屏动效形式：laser-scan (激光横扫)、digital-rain (数码流雨)。 */
   matrixBootEffect?: MatrixBootEffect;
-  /** 自定义方格矩阵开场点阵图案（0~99的像素序号数组），为 null 或空时回退为默认 SAO。 */
+  /** 自定义方格矩阵开场点阵图案（0~99的像素序号数组），为 null 或空时回退为默认 Su-SAO。 */
   matrixCustomPattern?: number[] | null;
   /** 云端保存的用户自定义点阵预设列表（跨设备漫游）。 */
   matrixUserPresets?: UserMatrixPreset[];

@@ -3,7 +3,7 @@ import { clsx } from "clsx";
 import { useMetricColorsVersion } from "@/hooks/useMetricColors";
 import { usePreferences } from "@/hooks/usePreferences";
 import { useThemeSettings } from "@/hooks/useThemeSettings";
-import type { HomepagePingDisplayLine } from "@/types/komari";
+import type { HomepagePingDisplayLine, PingLatencyThresholds } from "@/types/komari";
 import { resolveCustomLatencyColor, resolveCustomLossColor } from "@/utils/metricTone";
 import { isFallbackTaskName } from "@/utils/pingTasks";
 import { HealthBucketTooltip } from "./HealthBucketTooltip";
@@ -19,17 +19,19 @@ const MultiPingMetricRow = memo(function MultiPingMetricRow({
   metric,
   density,
   redrawKey,
+  latencyThresholds,
 }: {
   line: HomepagePingDisplayLine;
   metric: MultiPingMetric;
   density: MultiPingStatusDensity;
   redrawKey: string;
+  latencyThresholds: PingLatencyThresholds;
 }) {
   const themeSettings = useThemeSettings();
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const latencyColor = resolveCustomLatencyColor(
     line.lastValue,
-    themeSettings.pingLatencyThresholds,
+    latencyThresholds,
     themeSettings.pingLatencyColors,
   );
   const lossColor = resolveCustomLossColor(
@@ -119,6 +121,7 @@ const MultiPingMetricRow = memo(function MultiPingMetricRow({
             redrawKey={redrawKey}
             height={chartHeight}
             onHoverIndex={setHoveredIndex}
+            latencyThresholds={latencyThresholds}
           />
         ) : (
           <QualityBars
@@ -143,11 +146,13 @@ const MultiPingMetricColumn = memo(function MultiPingMetricColumn({
   metric,
   density,
   redrawKey,
+  latencyThresholds,
 }: {
   lines: HomepagePingDisplayLine[];
   metric: MultiPingMetric;
   density: MultiPingStatusDensity;
   redrawKey: string;
+  latencyThresholds: PingLatencyThresholds;
 }) {
   return (
     <div
@@ -159,6 +164,7 @@ const MultiPingMetricColumn = memo(function MultiPingMetricColumn({
           key={line.taskId}
           line={line}
           metric={metric}
+          latencyThresholds={latencyThresholds}
           density={density}
           redrawKey={redrawKey}
         />
@@ -171,10 +177,12 @@ export const MultiPingStatus = memo(function MultiPingStatus({
   lines,
   density,
   className,
+  latencyThresholds,
 }: {
   lines: HomepagePingDisplayLine[];
   density: MultiPingStatusDensity;
   className?: string;
+  latencyThresholds: PingLatencyThresholds;
 }) {
   const { resolvedAppearance } = usePreferences();
   const colorsVersion = useMetricColorsVersion();
@@ -190,12 +198,14 @@ export const MultiPingStatus = memo(function MultiPingStatus({
         <MultiPingMetricColumn
           lines={lines}
           metric="latency"
+          latencyThresholds={latencyThresholds}
           density={density}
           redrawKey={redrawKey}
         />
         <MultiPingMetricColumn
           lines={lines}
           metric="loss"
+          latencyThresholds={latencyThresholds}
           density={density}
           redrawKey={redrawKey}
         />

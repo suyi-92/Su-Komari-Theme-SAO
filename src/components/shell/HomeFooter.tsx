@@ -1,6 +1,7 @@
 import { GitBranch, ExternalLink } from "lucide-react";
 import clsx from "clsx";
 import { useThemeUpdate } from "@/hooks/useThemeUpdate";
+import { THEME_NAME, THEME_URL } from "@/utils/themeIdentity";
 
 export function HomeFooter() {
   const { hasUpdate, currentVersion, latestVersion, releaseUrl, toggleMockUpdate } = useThemeUpdate();
@@ -17,7 +18,7 @@ export function HomeFooter() {
             onClick={toggleMockUpdate}
             aria-label="版本状态指示点"
           />
-          <span className="home-footer-title">SAO</span>
+          <span className="home-footer-title">{THEME_NAME}</span>
         </div>
 
         <span className="home-footer-divider" aria-hidden="true" />
@@ -55,7 +56,7 @@ export function HomeFooter() {
 
         {/* GitHub 交互链接 */}
         <a
-          href="https://github.com/WAOR/Komari-Theme-SAO"
+          href={THEME_URL}
           target="_blank"
           rel="noopener noreferrer"
           className="home-footer-github"

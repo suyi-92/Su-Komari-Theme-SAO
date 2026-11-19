@@ -1,3 +1,4 @@
+import { THEME_NAME, THEME_REPO, THEME_URL } from "@/utils/themeIdentity";
 import {
   CircleDollarSign,
   HelpCircle,
@@ -158,11 +159,11 @@ export const PREVIEW_LOSS_BUCKETS: PingOverviewBucket[] = PREVIEW_LOSS_SAMPLES.m
 );
 
 export const LATENCY_TIER_CONFIG = [
-  { key: "excellent" as const, label: "极好", hint: "极低延迟，最流畅体验", defaultColor: DEFAULT_PING_LATENCY_COLORS.excellent },
-  { key: "good" as const, label: "良好", hint: "正常低延迟，无感知波动", defaultColor: DEFAULT_PING_LATENCY_COLORS.good },
-  { key: "moderate" as const, label: "中等", hint: "稍有延迟，基本稳定可用", defaultColor: DEFAULT_PING_LATENCY_COLORS.moderate },
-  { key: "elevated" as const, label: "偏高", hint: "高延迟警示，网络较吃紧", defaultColor: DEFAULT_PING_LATENCY_COLORS.elevated },
-  { key: "critical" as const, label: "极高", hint: "严重延迟，极度拥堵或告警", defaultColor: DEFAULT_PING_LATENCY_COLORS.critical },
+  { key: "excellent" as const, label: "极好", hint: "当前分档内最快的往返时延", defaultColor: DEFAULT_PING_LATENCY_COLORS.excellent },
+  { key: "good" as const, label: "良好", hint: "当前分档内表现良好", defaultColor: DEFAULT_PING_LATENCY_COLORS.good },
+  { key: "moderate" as const, label: "中等", hint: "当前分档内的中间区间", defaultColor: DEFAULT_PING_LATENCY_COLORS.moderate },
+  { key: "elevated" as const, label: "偏高", hint: "高于当前分档的常见时延", defaultColor: DEFAULT_PING_LATENCY_COLORS.elevated },
+  { key: "critical" as const, label: "极高", hint: "超过当前分档的最高门槛", defaultColor: DEFAULT_PING_LATENCY_COLORS.critical },
 ] as const;
 
 export const LOSS_TIER_CONFIG = [
@@ -260,12 +261,12 @@ export const BANDWIDTH_TIERS: readonly BandwidthTierItem[] = [
 export const PROJECT_REPOS = [
   {
     id: "komari",
-    name: "Komari SAO",
+    name: THEME_NAME,
     tag: "Komari",
-    repo: "WAOR/Komari-Theme-SAO",
-    url: "https://github.com/WAOR/Komari-Theme-SAO",
-    issuesUrl: "https://github.com/WAOR/Komari-Theme-SAO/issues",
-    newIssueUrl: "https://github.com/WAOR/Komari-Theme-SAO/issues/new",
+    repo: THEME_REPO,
+    url: THEME_URL,
+    issuesUrl: `${THEME_URL}/issues`,
+    newIssueUrl: `${THEME_URL}/issues/new`,
     desc: "服务于探针数据呈现本身的高自由度模块化主题",
     isCurrent: true,
   },

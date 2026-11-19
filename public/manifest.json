@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "Komari Monitor",
-  "short_name": "Komari",
-  "description": "A Komari server monitor.",
+  "name": "Su-SAO",
+  "short_name": "Su-SAO",
+  "description": "A theme for Komari Monitor.",
   "lang": "zh-CN",
   "start_url": "/",
   "scope": "/",

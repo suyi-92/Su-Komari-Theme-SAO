@@ -1,3 +1,4 @@
+import { THEME_NAME, THEME_SHORT } from "@/utils/themeIdentity";
 import type { NodeInfo } from "@/types/komari";
 
 const GIB = 1024 ** 3;
@@ -675,7 +676,6 @@ export function installDevMockApi() {
   // ?mock=1 默认模拟已登录管理员,放开 /api/admin/*,ThemeManage 才可在 dev 正常保存。显式 ?admin=0 模拟未授权。
   const adminMode = new URLSearchParams(window.location.search).get("admin") !== "0";
   // 保存后的主题设置驻留内存与本地存储，让「保存 → /api/public refetch」以及刷新页面闭环。
-  const defaultTheme = "SAO";
   const MOCK_STORAGE_KEY = "komari_mock_theme_settings";
   const defaultMockThemeSettings: Record<string, unknown> = {
     desktopNodeViewMode: "compact",
@@ -733,10 +733,7 @@ export function installDevMockApi() {
   };
 
   const initialStored = readPersistedSettings();
-  if (initialStored) {
-    savedThemeSettings["SAO"] = initialStored;
-    savedThemeSettings["komari-theme-sao"] = initialStored;
-  }
+  if (initialStored) savedThemeSettings[THEME_SHORT] = initialStored;
 
   window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     const request = new Request(input, init);
@@ -800,26 +797,20 @@ export function installDevMockApi() {
 
     if (url.pathname === "/api/admin/theme/settings") {
       if (!adminMode) return json({ message: "unauthorized" }, { status: 401 });
-      const theme = url.searchParams.get("theme") ?? defaultTheme;
+      const theme = url.searchParams.get("theme") ?? THEME_SHORT;
       const body = (await request.json()) as Record<string, unknown>;
       savedThemeSettings[theme] = body;
-      savedThemeSettings["SAO"] = body;
-      savedThemeSettings["komari-theme-sao"] = body;
-      writePersistedSettings(body);
+      if (theme === THEME_SHORT) writePersistedSettings(body);
       return json({ status: "success" });
     }
 
     if (url.pathname === "/api/public") {
-      const theme = url.searchParams.get("theme") ?? defaultTheme;
-      const activeSaved =
-        savedThemeSettings[theme] ??
-        savedThemeSettings["SAO"] ??
-        savedThemeSettings["komari-theme-sao"] ??
-        readPersistedSettings();
+      const theme = url.searchParams.get("theme") ?? THEME_SHORT;
+      const activeSaved = savedThemeSettings[theme];
       return json({
-        sitename: "Komari SAO",
+        sitename: THEME_NAME,
         description: "全球节点运行状态",
-        theme: "SAO",
+        theme,
         allow_cors: false,
         disable_password_login: false,
         oauth_enable: false,

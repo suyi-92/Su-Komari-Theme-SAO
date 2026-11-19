@@ -175,6 +175,7 @@ export function pickManagedThemeSettings(settings: ResolvedThemeSettings) {
     enableHomepageMultiPing: settings.enableHomepageMultiPing,
     homepageMultiPingTaskIds: settings.homepageMultiPingTaskIds,
     fakePingForUnbound: settings.fakePingForUnbound,
+    pingLatencyMode: settings.pingLatencyMode,
     pingLatencyThresholds: settings.pingLatencyThresholds,
     pingLatencyColors: settings.pingLatencyColors,
     pingLossThresholds: settings.pingLossThresholds,

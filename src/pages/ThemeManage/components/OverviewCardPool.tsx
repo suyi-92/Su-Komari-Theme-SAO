@@ -207,7 +207,7 @@ export function OverviewCardPool({
                       <div className="flex items-start justify-between gap-3 pb-3.5 mb-4 border-b border-(--hairline)">
                         <div className="min-w-0">
                           <div className="text-xs font-semibold text-(--text-primary) flex items-center gap-1.5">
-                            <span>SAO 指标卡池模块</span>
+                            <span>Su-SAO 指标卡池模块</span>
                             <span className="text-[10px] font-bold px-1.5 py-0.5 rounded border border-(--hairline) bg-(--bg-card) text-(--accent-500)">
                               固定 6 槽位
                             </span>

@@ -86,7 +86,7 @@ describe("history loading critical path", () => {
 
     expect(rpcCallMock.mock.calls.every(([method]) => method === "public:queryMetrics")).toBe(true);
     expect(fetch).not.toHaveBeenCalled();
-    expect(console.warn).toHaveBeenCalledWith("[Komari-Theme-SAO] RPC 查询失败", expect.objectContaining({
+    expect(console.warn).toHaveBeenCalledWith("[Su-SAO] RPC 查询失败", expect.objectContaining({
       method: "public:queryMetrics", hours: 1, status: 403, elapsedMs: 0,
     }));
   });

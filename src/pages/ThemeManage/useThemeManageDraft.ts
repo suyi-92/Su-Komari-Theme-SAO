@@ -178,6 +178,7 @@ export function useThemeManageDraft({
     editVersionRef.current += 1;
     setDraft((prev) => ({
       ...prev,
+      pingLatencyMode: "regional",
       pingLatencyThresholds: DEFAULT_PING_LATENCY_THRESHOLDS,
       pingLatencyColors: DEFAULT_PING_LATENCY_COLORS,
     }));

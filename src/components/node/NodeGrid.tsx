@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Activity,
@@ -522,6 +522,40 @@ const HomeOverviewCards = memo(function HomeOverviewCards({
   );
 });
 
+function FilterScrollRow({
+  className,
+  label,
+  children,
+}: {
+  className: string;
+  label: string;
+  children: ReactNode;
+}) {
+  const scrollTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  useEffect(() => () => clearTimeout(scrollTimer.current), []);
+
+  function showScrollbar(viewport: HTMLDivElement) {
+    viewport.dataset.scrolling = "true";
+    clearTimeout(scrollTimer.current);
+    scrollTimer.current = setTimeout(() => delete viewport.dataset.scrolling, 750);
+  }
+
+  return (
+    <div
+      className="home-filter-scroll"
+      onScroll={(event) => showScrollbar(event.currentTarget)}
+      onFocus={(event) => {
+        if (event.target.matches(":focus-visible")) showScrollbar(event.currentTarget);
+      }}
+    >
+      <div className={className} role="group" aria-label={label}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
 function GroupTabs({
   groups,
   selectedGroup,
@@ -532,11 +566,10 @@ function GroupTabs({
   onSelectGroup: (group: string) => void;
 }) {
   return (
-    <div className="home-group-tabs" role="group" aria-label="服务器分组">
+    <FilterScrollRow className="home-group-tabs" label="服务器分组">
       <button
         type="button"
         aria-pressed={selectedGroup === HOME_ALL_GROUP}
-        data-active={selectedGroup === HOME_ALL_GROUP ? "true" : "false"}
         onClick={() => onSelectGroup(HOME_ALL_GROUP)}
       >
         全部
@@ -546,18 +579,16 @@ function GroupTabs({
           key={group}
           type="button"
           aria-pressed={selectedGroup === group}
-          data-active={selectedGroup === group ? "true" : "false"}
           onClick={() => onSelectGroup(group)}
           title={group}
         >
           {group}
         </button>
       ))}
-    </div>
+    </FilterScrollRow>
   );
 }
 
-// 地区筛选栏: GPU 合成器硬件加速 (0% 主线程占用/零开屏卡顿) + 极速手势拖拽 + 物理惯性滑行 + 点选定格/再次点击即时恢复
 const RegionTabs = memo(function RegionTabs({
   regions,
   selectedRegion,
@@ -567,295 +598,28 @@ const RegionTabs = memo(function RegionTabs({
   selectedRegion: string;
   onSelectRegion: (region: string) => void;
 }) {
-  const barRef = useRef<HTMLElement>(null);
-  const capsuleRef = useRef<HTMLDivElement>(null);
-  const trackRef = useRef<HTMLDivElement>(null);
-  const singleSetRef = useRef<HTMLDivElement>(null);
-
-  const [isOverflowing, setIsOverflowing] = useState(() => {
-    if (typeof window !== "undefined") {
-      if (window.innerWidth < 640) return regions.length > 4;
-      return regions.length >= 6;
-    }
-    return regions.length >= 6;
-  });
-
-  const [isAnimated, setIsAnimated] = useState(true);
-
-  const marqueeDuration = Math.max(16, regions.length * 3.2);
-
-  const isDraggingRef = useRef(false);
-  const dragStartXRef = useRef(0);
-  const dragStartTrackXRef = useRef(0);
-  const currentTrackXRef = useRef(0);
-  const hasMovedRef = useRef(false);
-  const pointerHistoryRef = useRef<Array<{ x: number; time: number }>>([]);
-  const inertiaRafRef = useRef<number | null>(null);
-
-  const hasSelected = selectedRegion !== HOME_ALL_REGION;
-
-  const useIsomorphicLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
-
-  // 1. 视口溢出检测
-  useIsomorphicLayoutEffect(() => {
-    const bar = barRef.current;
-    const singleSet = singleSetRef.current;
-    if (!bar || !singleSet) return;
-
-    const updateDimensions = () => {
-      const availableWidth = Math.min(bar.clientWidth, 540);
-      const setWidth = singleSet.offsetWidth;
-      const overflow = setWidth > availableWidth + 2;
-      setIsOverflowing(overflow);
-    };
-
-    updateDimensions();
-
-    const observer = new ResizeObserver(() => {
-      updateDimensions();
-    });
-
-    observer.observe(bar);
-    observer.observe(singleSet);
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [regions]);
-
-  // 清理惯性定时器
-  useEffect(() => {
-    return () => {
-      if (inertiaRafRef.current) cancelAnimationFrame(inertiaRafRef.current);
-    };
-  }, []);
-
-  // 循环映射算法：将任意正负物理坐标无缝折叠回 [-singleWidth, 0]，杜绝任何拖拽与滑行露白
-  const getWrappedX = (rawX: number, singleWidth: number) => {
-    if (singleWidth <= 0) return 0;
-    let norm = rawX % singleWidth;
-    if (norm > 0) norm -= singleWidth;
-    return norm; // 恒定位于 [-singleWidth, 0]，正好对应首尾相连的两组连续镜像
-  };
-
-  // 恢复 CSS 硬件加速巡航（将当前物理位移精确映射为 animationDelay）
-  const resumeMarqueeAtCurrentX = (trackX: number) => {
-    const track = trackRef.current;
-    const singleSet = singleSetRef.current;
-    if (!track || !singleSet) return;
-
-    const singleWidth = singleSet.offsetWidth || track.scrollWidth / 3;
-    if (singleWidth <= 0) return;
-
-    const normX = getWrappedX(trackX, singleWidth);
-    let progress = (-normX) / singleWidth; // 0 到 1 之间的进度
-    if (progress >= 1 || progress <= 0) progress = 0;
-    const delay = -(progress * marqueeDuration);
-
-    track.style.animationDelay = `${delay}s`;
-    track.classList.add("is-animated");
-    // 强制触发重排，让浏览器在当前帧立即解析并装载 CSS 动画
-    void track.offsetWidth;
-    // 动画已在当前帧就绪接管，此时安全清除 inline transform，杜绝 1 帧归零空白闪烁
-    track.style.transform = "";
-    setIsAnimated(true);
-  };
-
-  // 2. 手势拖拽与鼠标拖拽（绝不使用 setPointerCapture 拦截子元素，保证按钮点击 100% 触发）
-  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!isOverflowing) return;
-    if (e.button !== 0 && e.pointerType === "mouse") return;
-
-    // 停止正在进行的惯性滑行
-    if (inertiaRafRef.current) {
-      cancelAnimationFrame(inertiaRafRef.current);
-      inertiaRafRef.current = null;
-    }
-
-    const track = trackRef.current;
-    if (!track) return;
-
-    const singleWidth = singleSetRef.current?.offsetWidth || track.scrollWidth / 3;
-
-    // 精准截获当前动画运行到的亚像素物理坐标，并立即折叠至标准无缝区间
-    const style = window.getComputedStyle(track);
-    const matrix = new DOMMatrix(style.transform);
-    const currentX = getWrappedX(matrix.m41, singleWidth);
-
-    track.style.transform = `translate3d(${currentX}px, 0, 0)`;
-    track.classList.remove("is-animated");
-    void track.offsetWidth;
-    setIsAnimated(false);
-
-    isDraggingRef.current = true;
-    hasMovedRef.current = false;
-    dragStartXRef.current = e.clientX;
-    dragStartTrackXRef.current = currentX;
-    currentTrackXRef.current = currentX;
-    pointerHistoryRef.current = [{ x: e.clientX, time: performance.now() }];
-
-    const onPointerMoveWindow = (moveEvent: PointerEvent) => {
-      if (!isDraggingRef.current || !trackRef.current) return;
-      const deltaX = moveEvent.clientX - dragStartXRef.current;
-      if (Math.abs(deltaX) > 4) {
-        hasMovedRef.current = true;
-      }
-
-      const now = performance.now();
-      const history = pointerHistoryRef.current;
-      history.push({ x: moveEvent.clientX, time: now });
-      if (history.length > 6) history.shift();
-
-      const singleW = singleSetRef.current?.offsetWidth || trackRef.current.scrollWidth / 3;
-      const rawX = dragStartTrackXRef.current + deltaX;
-      const nextX = getWrappedX(rawX, singleW);
-      currentTrackXRef.current = nextX;
-      trackRef.current.style.transform = `translate3d(${nextX}px, 0, 0)`;
-    };
-
-    const onPointerUpWindow = () => {
-      window.removeEventListener("pointermove", onPointerMoveWindow);
-      window.removeEventListener("pointerup", onPointerUpWindow);
-      window.removeEventListener("pointercancel", onPointerUpWindow);
-
-      if (!isDraggingRef.current) return;
-      isDraggingRef.current = false;
-
-      // 快速滑动惯性计算 (Inertia Fling)
-      const now = performance.now();
-      const history = pointerHistoryRef.current.filter((p) => now - p.time < 90);
-      let velocity = 0;
-      if (history.length >= 2) {
-        const first = history[0];
-        const last = history[history.length - 1];
-        const dt = (last.time - first.time) / 1000;
-        if (dt > 0.008) {
-          velocity = (last.x - first.x) / dt; // px/s
-        }
-      }
-
-      velocity = Math.max(-2000, Math.min(2000, velocity));
-
-      // 若有明显甩动力度，启动阻尼惯性滑行
-      if (Math.abs(velocity) > 80) {
-        let currentPos = currentTrackXRef.current;
-        let lastFrameTime = performance.now();
-
-        const inertiaStep = (frameNow: number) => {
-          const dt = Math.min((frameNow - lastFrameTime) / 1000, 0.033);
-          lastFrameTime = frameNow;
-
-          currentPos += velocity * dt;
-          const singleW = singleSetRef.current?.offsetWidth || (trackRef.current ? trackRef.current.scrollWidth / 3 : 0);
-          const wrappedPos = getWrappedX(currentPos, singleW);
-          currentTrackXRef.current = wrappedPos;
-          if (trackRef.current) {
-            trackRef.current.style.transform = `translate3d(${wrappedPos}px, 0, 0)`;
-          }
-
-          velocity *= Math.pow(0.92, dt * 60);
-
-          if (Math.abs(velocity) > 12) {
-            inertiaRafRef.current = requestAnimationFrame(inertiaStep);
-          } else {
-            inertiaRafRef.current = null;
-            // 惯性平息后：若未选中则无缝恢复 CSS 合成器巡航，若已选中则停泊在当前位置
-            if (!hasSelected) {
-              resumeMarqueeAtCurrentX(wrappedPos);
-            }
-          }
-        };
-
-        inertiaRafRef.current = requestAnimationFrame(inertiaStep);
-      } else {
-        // 未甩动：若未选中则恢复 CSS 巡航
-        if (!hasSelected) {
-          resumeMarqueeAtCurrentX(currentTrackXRef.current);
-        }
-      }
-
-      // 50ms 后释放 hasMoved 状态，防止误触刚刚拖拽松手时的点击
-      setTimeout(() => {
-        hasMovedRef.current = false;
-      }, 50);
-    };
-
-    window.addEventListener("pointermove", onPointerMoveWindow);
-    window.addEventListener("pointerup", onPointerUpWindow);
-    window.addEventListener("pointercancel", onPointerUpWindow);
-  };
-
-  // 3. 标签点击（防拖拽误触 + 点击选中定格 / 再次点击立即恢复流动）
-  const handleChipClick = (code: string) => {
-    if (hasMovedRef.current) return;
-
-    const active = selectedRegion === code;
-    const nextCode = active ? HOME_ALL_REGION : code;
-    onSelectRegion(nextCode);
-
-    // 如果从选中状态切换为取消选中（恢复全部节点），且当前未在动画中，立即恢复 CSS 漫游
-    if (active && !isAnimated) {
-      resumeMarqueeAtCurrentX(currentTrackXRef.current);
-    }
-  };
-
-  const renderChip = (code: string, count: number, suffix: string, isClone = false) => {
-    const active = selectedRegion === code;
-    return (
-      <button
-        key={`${code}-${suffix}`}
-        type="button"
-        className="home-region-chip"
-        data-active={active ? "true" : "false"}
-        aria-pressed={active}
-        tabIndex={isClone ? -1 : 0}
-        aria-hidden={isClone ? "true" : undefined}
-        onClick={() => handleChipClick(code)}
-        onDragStart={(e) => e.preventDefault()}
-        title={code}
-      >
-        <Flag region={code} size={14} />
-        <span className="home-region-chip-code">{code}</span>
-        <span className="home-region-chip-count">{count}</span>
-      </button>
-    );
-  };
-
-  const trackStyle: CSSProperties = {
-    ...(isOverflowing ? ({ "--marquee-duration": `${marqueeDuration}s` } as CSSProperties) : {}),
-    animationPlayState: hasSelected ? "paused" : "running",
-  };
-
   return (
-    <section ref={barRef} className="home-region-bar" aria-label="地区筛选">
-      <div
-        ref={capsuleRef}
-        className="home-region-capsule"
-        data-looping={isOverflowing ? "true" : "false"}
-        onPointerDown={onPointerDown}
-      >
-        <div
-          ref={trackRef}
-          className={`home-region-track ${isOverflowing && isAnimated ? "is-animated" : ""}`}
-          style={trackStyle}
-          role="group"
-        >
-          <div className="home-region-set" ref={singleSetRef}>
-            {regions.map(({ code, count }) => renderChip(code, count, "a"))}
-          </div>
-          {isOverflowing && (
-            <>
-              <div className="home-region-set" aria-hidden="true">
-                {regions.map(({ code, count }) => renderChip(code, count, "b", true))}
-              </div>
-              <div className="home-region-set" aria-hidden="true">
-                {regions.map(({ code, count }) => renderChip(code, count, "c", true))}
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-    </section>
+    <div className="home-region-bar">
+      <FilterScrollRow className="home-region-tabs" label="地区筛选">
+        {regions.map(({ code, count }) => {
+          const active = selectedRegion === code;
+          return (
+            <button
+              key={code}
+              type="button"
+              className="home-region-chip"
+              aria-pressed={active}
+              aria-label={`${code}，${count} 个节点`}
+              onClick={() => onSelectRegion(active ? HOME_ALL_REGION : code)}
+            >
+              <Flag region={code} size={14} />
+              <span className="home-region-chip-code">{code}</span>
+              <span className="home-region-chip-count">{count}</span>
+            </button>
+          );
+        })}
+      </FilterScrollRow>
+    </div>
   );
 });
 
@@ -1399,7 +1163,6 @@ export function NodeGrid() {
   // 地区栏:只有一个地区时筛选无意义,>1 才显示。
   const showRegionBar =
     themeSettings.isReady && themeSettings.showRegionBar && regionOptions.length > 1;
-  // 分组标签栏与卡片网格共用列定义，让标签栏左缘对齐首卡。
   const isMini = mode === "mini";
   const isList = mode === "list";
   const { className: gridClassName, minColumnWidth } = GRID_LAYOUT[mode];
@@ -1414,17 +1177,6 @@ export function NodeGrid() {
       {cardsReady ? cards : null}
     </div>
   );
-  // 迷你与列表档的控件栏借用小卡列宽，避免跟随密集内容列而被压窄。
-  const borrowControlsGrid = isMini || isList;
-  const controlsWrapClassName = borrowControlsGrid
-    ? "grid gap-3 home-controls-bar mb-4"
-    : `${gridWrapClassName} home-controls-bar mb-4`;
-  const controlsStyle = borrowControlsGrid
-    ? {
-      gridTemplateColumns: `repeat(auto-fill, minmax(min(100%, ${GRID_LAYOUT.compact.minColumnWidth}px), 1fr))`,
-    }
-    : gridStyle;
-
   if (!themeSettings.isReady || !storeHydrated) {
     if (!nodeInfoError) return null;
     return (
@@ -1543,7 +1295,7 @@ export function NodeGrid() {
           </div>
         )}
         {((!showHomeOverview && showHomeSort) || showGroupTabs) && (
-          <div className={controlsWrapClassName} style={controlsStyle}>
+          <div className="home-controls-bar mb-4">
             {showGroupTabs && (
               <GroupTabs
                 groups={groupOptions}

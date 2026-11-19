@@ -27,6 +27,7 @@ import {
   resolveCustomLossColor,
   trafficUsageColor,
 } from "@/utils/metricTone";
+import { getPingLatencyProfile, resolvePingLatencyThresholds } from "@/utils/pingLatencyProfiles";
 import { resolveTrafficUsage, trafficTypeLabel, type TrafficDisplay } from "@/utils/traffic";
 import { resolveOsInfo } from "@/components/ui/OsLogo";
 import {
@@ -61,6 +62,7 @@ export function useNodeCardModel(
     homepagePingBindings,
     enableHomepageMultiPing,
     homepageMultiPingTaskIds,
+    pingLatencyMode,
     pingLatencyThresholds,
     pingLatencyColors,
     pingLossThresholds,
@@ -189,12 +191,17 @@ export function useNodeCardModel(
     };
   }, [isPriceVisible, meta, now, showCardGroup]);
 
+  const latencyThresholds = useMemo(
+    () => resolvePingLatencyThresholds(pingLatencyMode, pingLatencyThresholds, getPingLatencyProfile(meta)),
+    [meta, pingLatencyMode, pingLatencyThresholds],
+  );
   // ping 派生的颜色只在 ping item 或主题 ping 配置变化时才变。
   const pingModel = useMemo(
     () => ({
+      latencyThresholds,
       latencyColor: resolveCustomLatencyColor(
         ping.lastValue,
-        pingLatencyThresholds,
+        latencyThresholds,
         pingLatencyColors,
       ),
       lossColor: resolveCustomLossColor(
@@ -214,7 +221,7 @@ export function useNodeCardModel(
       ping,
       pingError,
       pingLatencyColors,
-      pingLatencyThresholds,
+      latencyThresholds,
       pingLoading,
       pingLossColors,
       pingLossThresholds,

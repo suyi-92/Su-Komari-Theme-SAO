@@ -2834,7 +2834,7 @@
 }
 
 
-/* SAO 正体开屏点阵动效：统一重置所有槽位与节点的底色、边框、透明度与动画，杜绝深浅不一 */
+/* Su-SAO 正体开屏点阵动效：统一重置所有槽位与节点的底色、边框、透明度与动画，杜绝深浅不一 */
 .mao-matrix-section .mao-heatmap-cell.is-sao-pixel,
 .mao-matrix-section .mao-heatmap-cell.is-sao-bg,
 .mao-matrix-section .mao-heatmap-cell.is-sao-unlit,
@@ -4730,12 +4730,46 @@
 }
 
 
-.home-group-tabs {
-  display: inline-flex;
+.home-filter-scroll {
+  --filter-scroll-thumb: transparent;
   min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 3px 2px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--filter-scroll-thumb) transparent;
+}
+
+@media (hover: hover) {
+  .home-filter-scroll:hover {
+    --filter-scroll-thumb: var(--text-tertiary);
+  }
+}
+
+.home-filter-scroll[data-scrolling="true"] {
+  --filter-scroll-thumb: var(--text-tertiary);
+}
+
+/* 兼容支持 WebKit 滚动条伪元素的旧版浏览器。 */
+.home-filter-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+
+.home-filter-scroll::-webkit-scrollbar-thumb {
+  background-color: var(--filter-scroll-thumb);
+  border-radius: 999px;
+}
+
+.home-filter-scroll button:focus-visible {
+  outline: 2px solid var(--accent-500);
+  outline-offset: -2px;
+}
+
+.home-group-tabs {
+  display: flex;
+  width: max-content;
   align-items: center;
   gap: 3px;
-  overflow-x: auto;
   border: 1px solid rgba(0, 0, 0, 0.06);
   border-radius: 12px;
   background: #ffffff;
@@ -4750,7 +4784,7 @@
 
 .home-group-tabs button {
   display: inline-flex;
-  flex: 1 0 auto;
+  flex: 0 0 auto;
   min-height: 28px;
   max-width: 240px;
   align-items: center;
@@ -4780,14 +4814,14 @@
   color: var(--text-primary);
 }
 
-.home-group-tabs button[data-active="true"] {
+.home-group-tabs button[aria-pressed="true"] {
   background: #f3f4f6;
   color: var(--text-primary);
   font-weight: 750;
   box-shadow: none;
 }
 
-:root[data-appearance="dark"] .home-group-tabs button[data-active="true"] {
+:root[data-appearance="dark"] .home-group-tabs button[aria-pressed="true"] {
   background: rgba(255, 255, 255, 0.12);
   color: var(--text-primary);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
@@ -4796,7 +4830,6 @@
 
 @media (max-width: 560px) {
   .home-group-tabs {
-    width: 100%;
     border-radius: 14px;
   }
 
@@ -4808,91 +4841,15 @@
   }
 }
 
-/* 地区筛选栏：无壳极简单行循环流动视口（无外框无底色，仅保留两端自然羽化渐隐） */
 .home-region-bar {
   margin-bottom: 12px;
+}
+
+.home-region-tabs {
   display: flex;
   align-items: center;
-  width: 100%;
-}
-
-.home-region-capsule {
-  position: relative;
-  display: flex;
-  align-items: center;
-  width: fit-content;
-  max-width: 100%;
-  padding: 4px 0;
-  overflow: hidden;
-  touch-action: pan-y;
-  user-select: none;
-  -webkit-user-select: none;
-  cursor: grab;
-}
-
-.home-region-capsule:active {
-  cursor: grabbing;
-}
-
-/* 溢出循环时视口限制与双端渐隐羽化遮罩 (Edge Fade Mask) */
-.home-region-capsule[data-looping="true"] {
-  max-width: min(100%, 540px);
-  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 28px, black calc(100% - 28px), transparent 100%);
-  mask-image: linear-gradient(to right, transparent 0%, black 28px, black calc(100% - 28px), transparent 100%);
-}
-
-@media (max-width: 640px) {
-  .home-region-capsule[data-looping="true"] {
-    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 16px, black calc(100% - 16px), transparent 100%);
-    mask-image: linear-gradient(to right, transparent 0%, black 16px, black calc(100% - 16px), transparent 100%);
-  }
-}
-
-/* 非循环模式（<=6个地区）：在宽屏自然展开完整胶囊不截断 */
-.home-region-capsule[data-looping="false"] {
-  max-width: 100%;
-  cursor: default;
-}
-
-/* 硬件加速无缝无限循环关键帧：通过合成器线程 (Compositor Thread) 完全独立于 JS 主线程运行 */
-@keyframes home-region-marquee {
-  0% {
-    transform: translate3d(0, 0, 0);
-  }
-
-  100% {
-    transform: translate3d(-33.333333%, 0, 0);
-  }
-}
-
-.home-region-track {
-  display: flex;
-  align-items: center;
-  flex-wrap: nowrap;
-  gap: 0;
-  padding: 2px 2px;
-  user-select: none;
-  -webkit-user-select: none;
-  will-change: transform;
-}
-
-.home-region-track.is-animated {
-  animation: home-region-marquee var(--marquee-duration, 20s) linear infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .home-region-track.is-animated {
-    animation: none !important;
-  }
-}
-
-.home-region-set {
-  display: flex;
-  align-items: center;
-  flex-wrap: nowrap;
+  width: max-content;
   gap: 6px;
-  padding-right: 6px;
-  flex-shrink: 0;
 }
 
 .home-region-chip {
@@ -4934,7 +4891,7 @@
   color: var(--text-primary);
 }
 
-.home-region-chip[data-active="true"] {
+.home-region-chip[aria-pressed="true"] {
   background: color-mix(in srgb, var(--accent-500) 14%, #ffffff);
   color: var(--accent-500, #3b82f6);
   border-color: color-mix(in srgb, var(--accent-500) 50%, transparent);
@@ -4943,7 +4900,7 @@
   transform: scale(1.02);
 }
 
-:root[data-appearance="dark"] .home-region-chip[data-active="true"] {
+:root[data-appearance="dark"] .home-region-chip[aria-pressed="true"] {
   background: color-mix(in srgb, var(--accent-500) 24%, rgba(255, 255, 255, 0.06));
   color: color-mix(in srgb, var(--accent-500) 90%, white);
   border-color: color-mix(in srgb, var(--accent-500) 55%, transparent);
@@ -4975,12 +4932,12 @@
   background: rgba(255, 255, 255, 0.1);
 }
 
-.home-region-chip[data-active="true"] .home-region-chip-count {
+.home-region-chip[aria-pressed="true"] .home-region-chip-count {
   background: color-mix(in srgb, var(--accent-500) 25%, transparent);
   color: var(--accent-500);
 }
 
-:root[data-appearance="dark"] .home-region-chip[data-active="true"] .home-region-chip-count {
+:root[data-appearance="dark"] .home-region-chip[aria-pressed="true"] .home-region-chip-count {
   background: color-mix(in srgb, var(--accent-500) 30%, transparent);
   color: color-mix(in srgb, var(--accent-500) 95%, white);
 }
@@ -4999,9 +4956,10 @@
   padding-top: 0px;
 }
 
-/* 首页控件条复用卡片网格列定义：分组标签落在第一列，排序控件钉在最后一列。 */
 .home-controls-bar {
-  align-items: center;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
 }
 
 .home-controls-bar+.home-region-bar {
@@ -5013,9 +4971,9 @@
 }
 
 .home-controls-bar .home-sort {
-  grid-column: -2 / -1;
-  justify-self: end;
-  align-self: center;
+  flex: none;
+  margin-inline-start: auto;
+  margin-top: 3px;
 }
 
 .home-sort-trigger {
@@ -5079,28 +5037,6 @@
 
 .home-sort-item[data-active="true"] svg {
   color: var(--accent-500);
-}
-
-/* 移动端让分组与排序并排；分组可横向滚动，排序保持在右侧。 */
-@media (max-width: 768px) {
-  .home-controls-bar {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .home-controls-bar .home-group-tabs {
-    flex: 1 1 auto;
-    width: auto;
-    min-width: 0;
-  }
-
-  .home-controls-bar .home-sort {
-    grid-column: auto;
-    align-self: auto;
-    flex: 0 0 auto;
-    margin-inline-start: auto;
-  }
 }
 
 @media (min-width: 1024px) {

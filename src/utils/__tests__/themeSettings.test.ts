@@ -1,7 +1,34 @@
 import { describe, expect, it } from "vitest";
-import { normalizeThemeSettings } from "@/utils/themeSettings";
+import { DEFAULT_PING_LATENCY_THRESHOLDS, normalizeThemeSettings } from "@/utils/themeSettings";
 
 describe("normalizeThemeSettings", () => {
+  it("uses regional latency for legacy default thresholds and retains custom settings", () => {
+    expect(normalizeThemeSettings({}).pingLatencyMode).toBe("regional");
+    expect(normalizeThemeSettings({
+      pingLatencyThresholds: DEFAULT_PING_LATENCY_THRESHOLDS,
+    }).pingLatencyMode).toBe("regional");
+
+    const legacy = normalizeThemeSettings({
+      pingLatencyThresholds: { excellent: 30, good: 75 },
+      pingLatencyColors: { good: "#ABCDEF" },
+    });
+    expect(legacy.pingLatencyMode).toBe("custom");
+    expect(legacy.pingLatencyThresholds).toMatchObject({ excellent: 30, good: 75 });
+    expect(legacy.pingLatencyColors.good).toBe("#abcdef");
+
+    expect(normalizeThemeSettings({
+      pingLatencyMode: "regional",
+      pingLatencyThresholds: legacy.pingLatencyThresholds,
+    })).toMatchObject({
+      pingLatencyMode: "regional",
+      pingLatencyThresholds: legacy.pingLatencyThresholds,
+    });
+    expect(normalizeThemeSettings({
+      pingLatencyMode: "custom",
+      pingLatencyThresholds: DEFAULT_PING_LATENCY_THRESHOLDS,
+    }).pingLatencyMode).toBe("custom");
+  });
+
   it("keeps mini and falls unknown saved view modes back to compact", () => {
     const settings = normalizeThemeSettings({
       desktopNodeViewMode: "retired-view",

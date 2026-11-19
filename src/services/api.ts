@@ -509,8 +509,8 @@ const degradeWarned = new Set<string>();
 export function warnDegradedOnce(key: string, message: string, details?: Record<string, unknown>) {
   if (degradeWarned.has(key)) return;
   degradeWarned.add(key);
-  if (details) console.warn(`[Komari-Theme-SAO] ${message}`, details);
-  else console.warn(`[Komari-Theme-SAO] ${message}`);
+  if (details) console.warn(`[Su-SAO] ${message}`, details);
+  else console.warn(`[Su-SAO] ${message}`);
 }
 
 function isMissingMetricMethod(error: unknown) {

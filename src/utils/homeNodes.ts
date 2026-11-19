@@ -1,5 +1,5 @@
 import type { HomeNodeSummary } from "@/services/wsStore";
-import { getDisplayRegionCode } from "@/utils/geo";
+import { EUROPE_CODES, getDisplayRegionCode } from "@/utils/geo";
 
 export const HOME_ALL_GROUP = "__all__";
 export const HOME_ALL_REGION = "__all__";
@@ -13,16 +13,6 @@ export interface HomeRegionOption {
 // 默认地区排序优先级:中国大陆(CN)最前,港澳台紧随,再新加坡/日本/美国,然后欧洲诸国整体一档,
 // 其余垫底。列表内每个代码有唯一名次,所以无论数量多少都固定这个顺序。
 const REGION_PRIORITY: string[] = ["CN", "HK", "MO", "TW", "SG", "JP", "US"];
-
-// 欧洲诸国(含跨洲但通常并入欧洲的 TR/RU/外高加索),统一排在优先列表之后、其余地区之前。
-const EUROPE_CODES = new Set<string>([
-  // "EU":geo.ts 会把 Europe/欧洲 解析成 EU,归入本档而非"其余"。
-  "EU",
-  "GB", "IE", "FR", "DE", "NL", "BE", "LU", "CH", "AT", "IT", "ES", "PT",
-  "SE", "NO", "FI", "DK", "IS", "PL", "CZ", "SK", "HU", "RO", "BG", "GR",
-  "HR", "SI", "RS", "BA", "ME", "MK", "AL", "LT", "LV", "EE", "UA", "MD",
-  "BY", "RU", "TR", "CY", "MT", "LI", "MC", "AD", "SM", "VA", "GE", "AM", "AZ",
-]);
 
 function regionRank(code: string): number {
   const index = REGION_PRIORITY.indexOf(code);

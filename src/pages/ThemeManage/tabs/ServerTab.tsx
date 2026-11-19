@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   Activity,
   ChevronDown,
@@ -31,6 +31,11 @@ import {
   buildTrafficQuotaSegmentColors,
 } from "@/utils/metricTone";
 import {
+  PING_LATENCY_PROFILES,
+  resolvePingLatencyThresholds,
+  type PingLatencyProfileId,
+} from "@/utils/pingLatencyProfiles";
+import {
   HOMEPAGE_MULTI_PING_MAX_COUNT,
   HOMEPAGE_MULTI_PING_MIN_COUNT,
   type HomepagePingTaskBindings,
@@ -47,7 +52,7 @@ import {
   EMPTY_ADMIN_CLIENTS,
 } from "../constants";
 import type { ThemeDraft } from "../types";
-import type { AdminClient, PingTask, PingLatencyThresholds } from "@/types/komari";
+import type { AdminClient, PingTask, PingLatencyMode, PingLatencyThresholds } from "@/types/komari";
 
 export function ServerTab({
   draft,
@@ -122,6 +127,13 @@ export function ServerTab({
   moveGroup: (index: number, direction: -1 | 1) => void;
   draftHiddenNodes: string[];
 }) {
+  const [previewRegion, setPreviewRegion] = useState<PingLatencyProfileId>("hongKongMacau");
+  const regionalLatency = draft.pingLatencyMode === "regional";
+  const previewLatencyThresholds = resolvePingLatencyThresholds(
+    draft.pingLatencyMode, draft.pingLatencyThresholds, previewRegion,
+  );
+  const { excellent, good, moderate, elevated } = previewLatencyThresholds;
+
   const previewTrafficSegmentColors = useMemo(
     () => buildTrafficQuotaSegmentColors(draft.trafficSpectrumColors),
     [draft.trafficSpectrumColors],
@@ -200,7 +212,7 @@ export function ServerTab({
                   {[
                     {
                       value: "layered" as const,
-                      label: "SAO 双层底座",
+                      label: "Su-SAO 双层底座",
                       badge: "LAYERED TRAY",
                       desc: "卡片分上下两层：上层看硬件运行状态，底座单独看网络延迟。",
                       icon: Layers,
@@ -804,35 +816,60 @@ export function ServerTab({
                       <div>
                         <span className="setting-subhead-title">延迟光柱</span>
                         <p className="setting-hint mt-1">
-                          设定各毫秒区间的判断门槛与对应光柱颜色。
+                          按从中国大陆访问各地区的链路分档，或对所有节点使用统一门槛。
                         </p>
                       </div>
                       <button
                         type="button"
                         onClick={resetPingLatency}
                         className="theme-manage-button is-compact shrink-0 flex items-center gap-1.5"
-                        title="恢复为默认的 60/100/160/200ms 及预设色"
+                        title="恢复按地区评级、默认门槛和预设色"
                       >
                         <RotateCcw size={13} />
                         重置延迟
                       </button>
                     </div>
 
-                    {/* 就近实时预览：延迟光柱 */}
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-[12px] font-medium text-(--text-secondary)">
+                      <label htmlFor="ping-latency-mode">延迟评级</label>
+                      <SettingSelect
+                        id="ping-latency-mode"
+                        value={draft.pingLatencyMode}
+                        onChange={(event) => patch("pingLatencyMode", event.target.value as PingLatencyMode)}
+                      >
+                        <option value="regional">按地区</option>
+                        <option value="custom">自定义统一门槛</option>
+                      </SettingSelect>
+                    </div>
+
                     <div className="flex flex-col gap-2 rounded-[10px] border border-(--hairline) bg-(--bg-card) p-3">
-                      <div className="flex flex-wrap items-center justify-between gap-1 text-[12px]">
+                      <div className="flex flex-wrap items-center justify-between gap-2 text-[12px]">
                         <span className="font-medium text-(--text-secondary) flex items-center gap-1.5">
                           <Activity size={13} className="text-(--status-success)" />
-                          延迟光柱实时效果 (示例梯度 15ms ~ 320ms)
+                          延迟光柱预览（15–320 ms）
                         </span>
-                        <span className="tabular font-medium text-(--text-tertiary) text-[11px]">
-                          门槛：{draft.pingLatencyThresholds.excellent}ms / {draft.pingLatencyThresholds.good}ms / {draft.pingLatencyThresholds.moderate}ms / {draft.pingLatencyThresholds.elevated}ms
-                        </span>
+                        {regionalLatency && (
+                          <div className="flex flex-wrap items-center gap-2 text-(--text-secondary)">
+                            <label htmlFor="ping-latency-preview-region">预览地区</label>
+                            <SettingSelect
+                              id="ping-latency-preview-region"
+                              value={previewRegion}
+                              onChange={(event) => setPreviewRegion(event.target.value as PingLatencyProfileId)}
+                            >
+                              {Object.entries(PING_LATENCY_PROFILES).map(([id, profile]) => (
+                                <option key={id} value={id}>{profile.label}</option>
+                              ))}
+                            </SettingSelect>
+                          </div>
+                        )}
                       </div>
+                      <span className="tabular font-medium text-(--text-tertiary) text-[11px]">
+                        各档上限 {excellent} / {good} / {moderate} / {elevated} ms
+                      </span>
                       <div className="rounded-md bg-(--bg-primary) p-2 shadow-inner">
                         <LatencyBars
                           buckets={PREVIEW_LATENCY_BUCKETS}
-                          latencyThresholds={draft.pingLatencyThresholds}
+                          latencyThresholds={previewLatencyThresholds}
                           latencyColors={draft.pingLatencyColors}
                           height={18}
                         />
@@ -844,7 +881,7 @@ export function ServerTab({
                         const currentColor = draft.pingLatencyColors[key];
                         const isThresholdEditable = key !== "critical";
                         const thresholdVal = isThresholdEditable
-                          ? draft.pingLatencyThresholds[key]
+                          ? previewLatencyThresholds[key]
                           : null;
 
                         return (
@@ -887,15 +924,16 @@ export function ServerTab({
 
                             <div className="flex items-center justify-between gap-2 pt-1 border-t border-(--hairline)">
                               <span className="text-[11px] text-(--text-secondary) shrink-0">
-                                {isThresholdEditable ? "门槛上限" : "高延迟区间"}
+                                {isThresholdEditable ? "门槛上限" : "极高延迟"}
                               </span>
-                              {isThresholdEditable ? (
+                              {isThresholdEditable && !regionalLatency ? (
                                 <div className="flex items-center gap-1">
                                   <input
                                     type="number"
                                     min={1}
                                     max={9999}
                                     value={thresholdVal ?? 0}
+                                    aria-label={`${label}延迟上限（毫秒）`}
                                     onChange={(e) => {
                                       const num = parseInt(e.target.value, 10);
                                       if (!Number.isNaN(num) && num > 0) {
@@ -908,7 +946,7 @@ export function ServerTab({
                                 </div>
                               ) : (
                                 <span className="font-mono text-[11px] text-(--text-tertiary)">
-                                  &gt; {draft.pingLatencyThresholds.elevated}ms
+                                  {isThresholdEditable ? `${thresholdVal} ms` : `> ${elevated} ms`}
                                 </span>
                               )}
                             </div>

@@ -44,7 +44,7 @@ import { HealthBucketTooltip } from "./HealthBucketTooltip";
 import { MultiPingStatus } from "./MultiPingStatus";
 import { formatHealthBucketTooltip } from "./pingBucketText";
 import { clsx } from "clsx";
-import type { NodeInfo, NodeMetrics, PingOverviewBucket, PingOverviewItem, TrafficTrendSample } from "@/types/komari";
+import type { NodeInfo, NodeMetrics, PingLatencyThresholds, PingOverviewBucket, PingOverviewItem, TrafficTrendSample } from "@/types/komari";
 import type { ByteRateDisplay } from "@/utils/format";
 import { HomeInstanceLink } from "./HomeInstanceLink";
 
@@ -93,6 +93,7 @@ export const NodeCard = memo(function NodeCard({
     expireColor,
     uptime,
     renewalPrice,
+    latencyThresholds,
     latencyColor,
     lossColor,
     loadFraction,
@@ -180,6 +181,7 @@ export const NodeCard = memo(function NodeCard({
           {homepagePingLines.length >= HOMEPAGE_MULTI_PING_MIN_COUNT ? (
             <MultiPingStatus
               lines={homepagePingLines}
+              latencyThresholds={latencyThresholds}
               density="large"
               className="card-metric-section layered-multi-ping"
             />
@@ -192,6 +194,7 @@ export const NodeCard = memo(function NodeCard({
               shouldRenderPingBars={shouldRenderPingBars}
               pingLoading={pingLoading}
               pingError={pingError}
+              latencyThresholds={latencyThresholds}
               latencyColor={latencyColor}
               lossColor={lossColor}
             />
@@ -258,6 +261,7 @@ export const NodeCard = memo(function NodeCard({
           {homepagePingLines.length >= HOMEPAGE_MULTI_PING_MIN_COUNT ? (
             <MultiPingStatus
               lines={homepagePingLines}
+              latencyThresholds={latencyThresholds}
               density="large"
               className="card-metric-section"
             />
@@ -270,6 +274,7 @@ export const NodeCard = memo(function NodeCard({
               shouldRenderPingBars={shouldRenderPingBars}
               pingLoading={pingLoading}
               pingError={pingError}
+              latencyThresholds={latencyThresholds}
               latencyColor={latencyColor}
               lossColor={lossColor}
             />
@@ -524,6 +529,7 @@ const NodeHealthSection = memo(function NodeHealthSection({
   shouldRenderPingBars,
   pingLoading,
   pingError,
+  latencyThresholds,
   latencyColor,
   lossColor,
 }: {
@@ -534,6 +540,7 @@ const NodeHealthSection = memo(function NodeHealthSection({
   shouldRenderPingBars: boolean;
   pingLoading: boolean;
   pingError: boolean;
+  latencyThresholds: PingLatencyThresholds;
   latencyColor: string;
   lossColor: string;
 }) {
@@ -595,6 +602,7 @@ const NodeHealthSection = memo(function NodeHealthSection({
         <div className="server-health-chart-wrap">
           {shouldRenderPingBars ? (
             <LatencyBars
+              latencyThresholds={latencyThresholds}
               buckets={pingBuckets}
               redrawKey={redrawKey}
               onHoverIndex={onLatencyHover}

@@ -28,7 +28,7 @@ import {
 } from "./nodeCardShared";
 import { formatHealthBucketTooltip } from "./pingBucketText";
 import { formatBytes, type ByteRateDisplay } from "@/utils/format";
-import type { NodeInfo, NodeMetrics, PingOverviewItem, PingOverviewBucket } from "@/types/komari";
+import type { NodeInfo, NodeMetrics, PingLatencyColors, PingLatencyThresholds, PingOverviewItem, PingOverviewBucket } from "@/types/komari";
 import { HomeInstanceLink } from "./HomeInstanceLink";
 
 // 迷你卡固定为巡检布局，不跟随紧凑卡的可选指标开关；数据仍走共享模型。
@@ -266,9 +266,13 @@ function MiniFlow({
 function MiniHealthBars({
   buckets,
   kind,
+  latencyThresholds,
+  latencyColors,
 }: {
   buckets: PingOverviewBucket[];
   kind: "latency" | "loss";
+  latencyThresholds?: PingLatencyThresholds;
+  latencyColors?: PingLatencyColors;
 }) {
   const width = Math.max(1, buckets.length * 4 - 1);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
@@ -295,7 +299,7 @@ function MiniHealthBars({
         onPointerLeave={() => setHoveredIndex(null)}
       >
         {buckets.map((bucket, index) => {
-          const slot = healthBarSlotModel(bucket, kind);
+          const slot = healthBarSlotModel(bucket, kind, { latencyThresholds, latencyColors });
           const barHeight = 16 * slot.heightFraction;
 
           return (
@@ -322,6 +326,7 @@ function MiniHealthBars({
 const MiniHealth = memo(function MiniHealth({
   ping,
   pingBuckets,
+  latencyThresholds,
   latencyColor,
   lossColor,
   hasRealHomepagePingBinding,
@@ -330,12 +335,14 @@ const MiniHealth = memo(function MiniHealth({
 }: {
   ping: PingOverviewItem;
   pingBuckets: PingOverviewBucket[];
+  latencyThresholds: PingLatencyThresholds;
   latencyColor: string;
   lossColor: string;
   hasRealHomepagePingBinding: boolean;
   pingLoading: boolean;
   pingError: boolean;
 }) {
+  const { pingLatencyColors } = useThemeSettings();
   const { text: emptyText } = pingEmptyLabels(
     hasRealHomepagePingBinding,
     pingLoading,
@@ -368,7 +375,12 @@ const MiniHealth = memo(function MiniHealth({
             )}
           </strong>
         </div>
-        <MiniHealthBars kind="latency" buckets={pingBuckets} />
+        <MiniHealthBars
+          kind="latency"
+          buckets={pingBuckets}
+          latencyThresholds={latencyThresholds}
+          latencyColors={pingLatencyColors}
+        />
       </div>
       <div className="mini-node-health-item">
         <div className="mini-node-health-head">
@@ -415,6 +427,7 @@ export const MiniNodeCard = memo(function MiniNodeCard({
     pingBuckets,
     footerTags,
     renewalPrice,
+    latencyThresholds,
     latencyColor,
     lossColor,
     loadFraction,
@@ -448,6 +461,7 @@ export const MiniNodeCard = memo(function MiniNodeCard({
           <MiniHealth
             ping={ping}
             pingBuckets={pingBuckets}
+            latencyThresholds={latencyThresholds}
             latencyColor={latencyColor}
             lossColor={lossColor}
             hasRealHomepagePingBinding={hasRealHomepagePingBinding}
@@ -475,6 +489,7 @@ export const MiniNodeCard = memo(function MiniNodeCard({
       <MiniHealth
         ping={ping}
         pingBuckets={pingBuckets}
+        latencyThresholds={latencyThresholds}
         latencyColor={latencyColor}
         lossColor={lossColor}
         hasRealHomepagePingBinding={hasRealHomepagePingBinding}

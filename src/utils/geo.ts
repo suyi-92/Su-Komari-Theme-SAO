@@ -16,6 +16,15 @@ const ISO_3166_ALPHA2 = new Set(
   ).split(" "),
 );
 
+// 欧洲诸国(含跨洲但通常并入欧洲的 TR/RU/外高加索),统一排在优先列表之后、其余地区之前。
+export const EUROPE_CODES = new Set<string>([
+  "EU",
+  "GB", "IE", "FR", "DE", "NL", "BE", "LU", "CH", "AT", "IT", "ES", "PT",
+  "SE", "NO", "FI", "DK", "IS", "PL", "CZ", "SK", "HU", "RO", "BG", "GR",
+  "HR", "SI", "RS", "BA", "ME", "MK", "AL", "LT", "LV", "EE", "UA", "MD",
+  "BY", "RU", "TR", "CY", "MT", "LI", "MC", "AD", "SM", "VA", "GE", "AM", "AZ",
+]);
+
 const REGION_ALIASES: Record<string, string> = {
   argentina: "AR",
   america: "US",
@@ -46,6 +55,8 @@ const REGION_ALIASES: Record<string, string> = {
   japan: "JP",
   korea: "KR",
   malaysia: "MY",
+  macao: "MO",
+  macau: "MO",
   mexico: "MX",
   netherlands: "NL",
   norway: "NO",
@@ -79,8 +90,16 @@ const REGION_ALIASES: Record<string, string> = {
   台湾: "TW",
   台灣: "TW",
   香港: "HK",
+  中国香港: "HK",
+  中國香港: "HK",
+  香港特别行政区: "HK",
+  香港特別行政區: "HK",
   澳门: "MO",
   澳門: "MO",
+  中国澳门: "MO",
+  中國澳門: "MO",
+  澳门特别行政区: "MO",
+  澳門特別行政區: "MO",
   日本: "JP",
   韩国: "KR",
   韓國: "KR",

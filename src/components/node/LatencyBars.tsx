@@ -18,7 +18,7 @@ interface LatencyBarsProps {
   redrawKey?: string;
   height?: number;
   onHoverIndex?: (index: number | null) => void;
-  latencyThresholds?: PingLatencyThresholds;
+  latencyThresholds: PingLatencyThresholds;
   latencyColors?: PingLatencyColors;
 }
 
@@ -31,7 +31,6 @@ export function LatencyBars({
   latencyColors,
 }: LatencyBarsProps) {
   const themeSettings = useThemeSettings();
-  const effectiveThresholds = latencyThresholds ?? themeSettings.pingLatencyThresholds;
   const effectiveColors = latencyColors ?? themeSettings.pingLatencyColors;
 
   const bars = useMemo(
@@ -40,13 +39,13 @@ export function LatencyBars({
       void redrawKey;
       return buckets.map((bucket) => {
         const slot = healthBarSlotModel(bucket, "latency", {
-          latencyThresholds: effectiveThresholds,
+          latencyThresholds,
           latencyColors: effectiveColors,
         });
         return { ...slot, tone: safeCanvasColor(slot.color) };
       });
     },
-    [buckets, redrawKey, effectiveThresholds, effectiveColors],
+    [buckets, redrawKey, latencyThresholds, effectiveColors],
   );
 
   const getHoverIndex = useCallback(

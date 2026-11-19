@@ -46,6 +46,7 @@ import { NodeTodayTrafficPopover } from "./NodeTodayTrafficPopover";
 import type {
   NodeInfo,
   NodeMetrics,
+  PingLatencyThresholds,
   PingOverviewBucket,
   PingOverviewItem,
   TrafficTrendSample,
@@ -203,9 +204,11 @@ function CompactInfoRow({
 function HealthBars({
   buckets,
   kind,
+  latencyThresholds,
 }: {
   buckets: PingOverviewBucket[];
   kind: "latency" | "loss";
+  latencyThresholds?: PingLatencyThresholds;
 }) {
   const themeSettings = useThemeSettings();
   const bars = buckets.slice(-HEALTH_BAR_COUNT);
@@ -265,7 +268,7 @@ function HealthBars({
       )}
       {bars.map((bucket, index) => {
         const slot = healthBarSlotModel(bucket, kind, {
-          latencyThresholds: themeSettings.pingLatencyThresholds,
+          latencyThresholds,
           latencyColors: themeSettings.pingLatencyColors,
           lossThresholds: themeSettings.pingLossThresholds,
           lossColors: themeSettings.pingLossColors,
@@ -644,6 +647,7 @@ function CompactTrafficBar({
 const CompactNodeHealth = memo(function CompactNodeHealth({
   ping,
   pingBuckets,
+  latencyThresholds,
   latencyColor,
   lossColor,
   hasRealHomepagePingBinding,
@@ -652,6 +656,7 @@ const CompactNodeHealth = memo(function CompactNodeHealth({
 }: {
   ping: PingOverviewItem;
   pingBuckets: PingOverviewBucket[];
+  latencyThresholds: PingLatencyThresholds;
   latencyColor: string;
   lossColor: string;
   hasRealHomepagePingBinding: boolean;
@@ -681,7 +686,7 @@ const CompactNodeHealth = memo(function CompactNodeHealth({
         unit={ping.lastValue != null ? "ms" : undefined}
         color={latencyColor}
       >
-        <HealthBars buckets={pingBuckets} kind="latency" />
+        <HealthBars buckets={pingBuckets} kind="latency" latencyThresholds={latencyThresholds} />
       </CompactHealthItem>
       <CompactHealthItem
         icon={<Unplug size={12} />}
@@ -733,6 +738,7 @@ export const CompactNodeCard = memo(function CompactNodeCard({
     upRate,
     downRate,
     isOffline,
+    latencyThresholds,
     latencyColor,
     lossColor,
     loadFraction,
@@ -787,6 +793,7 @@ export const CompactNodeCard = memo(function CompactNodeCard({
           {homepagePingLines.length >= HOMEPAGE_MULTI_PING_MIN_COUNT ? (
             <MultiPingStatus
               lines={homepagePingLines}
+              latencyThresholds={latencyThresholds}
               density="compact"
               className="compact-node-bottom layered-multi-ping"
             />
@@ -794,6 +801,7 @@ export const CompactNodeCard = memo(function CompactNodeCard({
             <CompactNodeHealth
               ping={ping}
               pingBuckets={pingBuckets}
+              latencyThresholds={latencyThresholds}
               latencyColor={latencyColor}
               lossColor={lossColor}
               hasRealHomepagePingBinding={hasRealHomepagePingBinding}
@@ -839,6 +847,7 @@ export const CompactNodeCard = memo(function CompactNodeCard({
       {homepagePingLines.length >= HOMEPAGE_MULTI_PING_MIN_COUNT ? (
         <MultiPingStatus
           lines={homepagePingLines}
+          latencyThresholds={latencyThresholds}
           density="compact"
           className="compact-node-bottom"
         />
@@ -846,6 +855,7 @@ export const CompactNodeCard = memo(function CompactNodeCard({
         <CompactNodeHealth
           ping={ping}
           pingBuckets={pingBuckets}
+          latencyThresholds={latencyThresholds}
           latencyColor={latencyColor}
           lossColor={lossColor}
           hasRealHomepagePingBinding={hasRealHomepagePingBinding}

@@ -14,7 +14,7 @@ import { LatencyBars } from "./LatencyBars";
 import { HealthBucketTooltip } from "./HealthBucketTooltip";
 import { formatOsLabel, joinTagTitle, nodeDetailLinkLabels } from "./nodeCardShared";
 import { formatHealthBucketTooltip } from "./pingBucketText";
-import type { PingOverviewTaskLoadState } from "@/types/komari";
+import type { PingLatencyThresholds, PingOverviewTaskLoadState } from "@/types/komari";
 import { HomeInstanceLink } from "./HomeInstanceLink";
 
 const GAUGE_SEGMENTS = 14;
@@ -174,6 +174,7 @@ function ListLatency({
   loadState,
   hasRealHomepagePingBinding,
   pingIsAssigned,
+  latencyThresholds,
   latencyColor,
   buckets,
   redrawKey,
@@ -182,6 +183,7 @@ function ListLatency({
   loadState: PingOverviewTaskLoadState | undefined;
   hasRealHomepagePingBinding: boolean;
   pingIsAssigned: boolean;
+  latencyThresholds: PingLatencyThresholds;
   latencyColor: string;
   buckets: Parameters<typeof LatencyBars>[0]["buckets"];
   redrawKey: string;
@@ -214,6 +216,7 @@ function ListLatency({
       </span>
       <span className="node-list-latency-bars">
         <LatencyBars
+          latencyThresholds={latencyThresholds}
           buckets={buckets}
           redrawKey={redrawKey}
           height={14}
@@ -247,6 +250,7 @@ const NodeRow = memo(function NodeRow({ uuid }: { uuid: string }) {
     expireColor,
     uptime,
     renewalPrice,
+    latencyThresholds,
     latencyColor,
     hasRealHomepagePingBinding,
     loadFraction,
@@ -380,6 +384,7 @@ const NodeRow = memo(function NodeRow({ uuid }: { uuid: string }) {
           loadState={ping.loadState}
           hasRealHomepagePingBinding={hasRealHomepagePingBinding}
           pingIsAssigned={ping.isAssigned}
+          latencyThresholds={latencyThresholds}
           latencyColor={latencyColor}
           buckets={pingBuckets}
           redrawKey={redrawKey}

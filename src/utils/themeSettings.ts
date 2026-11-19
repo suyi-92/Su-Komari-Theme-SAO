@@ -1,6 +1,7 @@
 import type {
   OverviewCardId,
   PingLatencyColors,
+  PingLatencyMode,
   PingLatencyThresholds,
   PingLossColors,
   PingLossThresholds,
@@ -275,6 +276,7 @@ export interface ResolvedThemeSettings {
   enableHomepageMultiPing: boolean;
   homepageMultiPingTaskIds: number[];
   fakePingForUnbound: boolean;
+  pingLatencyMode: PingLatencyMode;
   pingLatencyThresholds: PingLatencyThresholds;
   pingLatencyColors: PingLatencyColors;
   pingLossThresholds: PingLossThresholds;
@@ -340,6 +342,7 @@ export const DEFAULT_THEME_SETTINGS: ResolvedThemeSettings = {
   enableHomepageMultiPing: false,
   homepageMultiPingTaskIds: [...DEFAULT_HOMEPAGE_MULTI_PING_TASK_IDS],
   fakePingForUnbound: false,
+  pingLatencyMode: "regional",
   pingLatencyThresholds: DEFAULT_PING_LATENCY_THRESHOLDS,
   pingLatencyColors: DEFAULT_PING_LATENCY_COLORS,
   pingLossThresholds: DEFAULT_PING_LOSS_THRESHOLDS,
@@ -561,6 +564,21 @@ export function normalizePingLatencyThresholds(val: unknown): PingLatencyThresho
   return { excellent: e, good: g, moderate: m, elevated: el };
 }
 
+function normalizePingLatencyMode(
+  mode: unknown,
+  thresholds: PingLatencyThresholds,
+): PingLatencyMode {
+  if (mode === "regional" || mode === "custom") return mode;
+  const defaults = DEFAULT_PING_LATENCY_THRESHOLDS;
+  // 旧版也会保存默认门槛，只有与默认值不同的旧配置迁移为自定义模式。
+  const isDefault =
+    thresholds.excellent === defaults.excellent &&
+    thresholds.good === defaults.good &&
+    thresholds.moderate === defaults.moderate &&
+    thresholds.elevated === defaults.elevated;
+  return isDefault ? "regional" : "custom";
+}
+
 export function normalizePingLatencyColors(val: unknown): PingLatencyColors {
   const defaults = DEFAULT_PING_LATENCY_COLORS;
   if (!val || typeof val !== "object") return defaults;
@@ -645,6 +663,7 @@ export function normalizeThemeSettings(
       : fallbackIndependentIds.length > 0
         ? fallbackIndependentIds
         : [...DEFAULT_HOMEPAGE_MULTI_PING_TASK_IDS];
+  const pingLatencyThresholds = normalizePingLatencyThresholds(settings?.pingLatencyThresholds);
   return {
     defaultAppearance: normalizeAppearance(settings?.defaultAppearance),
     desktopNodeViewMode: normalizeNodeViewMode(
@@ -674,7 +693,8 @@ export function normalizeThemeSettings(
     homepageMultiPingTaskIds,
     // 默认关闭(需手动开启):给访客展示的是模拟数据,必须由站长显式决定。
     fakePingForUnbound: settings?.fakePingForUnbound === true,
-    pingLatencyThresholds: normalizePingLatencyThresholds(settings?.pingLatencyThresholds),
+    pingLatencyMode: normalizePingLatencyMode(settings?.pingLatencyMode, pingLatencyThresholds),
+    pingLatencyThresholds,
     pingLatencyColors: normalizePingLatencyColors(settings?.pingLatencyColors),
     pingLossThresholds: normalizePingLossThresholds(settings?.pingLossThresholds),
     pingLossColors: normalizePingLossColors(settings?.pingLossColors),

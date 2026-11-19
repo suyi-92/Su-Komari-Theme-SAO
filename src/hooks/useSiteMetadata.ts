@@ -1,9 +1,10 @@
 import { useEffect } from "react";
 import { usePublicConfig } from "@/hooks/usePublicConfig";
+import { THEME_NAME } from "@/utils/themeIdentity";
 
 export const SITENAME_STORAGE_KEY = "komaritheme:sitename";
 export const DESCRIPTION_STORAGE_KEY = "komaritheme:description";
-export const FALLBACK_TITLE = "Komari-Theme-SAO";
+export const FALLBACK_TITLE = THEME_NAME;
 export const FALLBACK_DESCRIPTION = "A Komari monitor theme.";
 
 export function updateMeta(selector: string, attr: "content", value: string) {

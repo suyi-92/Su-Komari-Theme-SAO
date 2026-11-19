@@ -1,10 +1,10 @@
 {
-  "name": "komari-theme-sao",
+  "name": "su-sao",
   "private": true,
-  "version": "2.0.2",
+  "version": "2.1.0",
   "type": "module",
-  "description": "Komari-Theme-SAO",
-  "author": "WAOR",
+  "description": "Su-SAO",
+  "author": "suyi-92 (苏忆)",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
