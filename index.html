@@ -138,15 +138,16 @@
           try {
             value = JSON.parse(raw);
           } catch {}
-          if (!appearances.has(value)) return null;
-          const normalized = JSON.stringify(value);
-          if (raw !== normalized) localStorage.setItem(key, normalized);
-          return value;
+          return appearances.has(value) ? value : null;
         };
 
         let appearance = "dark";
         try {
-          appearance = readAppearance("appearance") ?? readAppearance("appearance_default") ?? "dark";
+          const sharedAppearance = readAppearance("appearance");
+          appearance =
+            localStorage.getItem("komaritheme:appearance-white") === "1"
+              ? "white"
+              : sharedAppearance ?? readAppearance("appearance_default") ?? "dark";
         } catch {
           appearance = "dark";
         }

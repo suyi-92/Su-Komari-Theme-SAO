@@ -13,7 +13,6 @@ import { usePublicConfig } from "@/hooks/usePublicConfig";
 import { useHourlyClock, useMinuteClock } from "@/hooks/useClock";
 import { useTodayTrafficStats } from "@/hooks/useTodayTrafficStats";
 import { useThemeUpdate } from "@/hooks/useThemeUpdate";
-import { usePreferences } from "@/hooks/usePreferences";
 import { getNodeMetricsSnapshot } from "@/services/wsStore";
 import {
   ApiRequestError,
@@ -55,7 +54,6 @@ import type { ThemeTabId } from "./types";
 export function ThemeManage() {
   const now = useHourlyClock();
   const { currentVersion, hasUpdate } = useThemeUpdate();
-  const { setAppearance } = usePreferences();
   const {
     data: config,
     isLoading: configLoading,
@@ -863,11 +861,7 @@ function calculateSimulatedCarrierLoss(
           )}
 
           {activeTab === "other" && (
-            <OtherTab
-              draft={draft}
-              patch={patch}
-              setAppearance={setAppearance}
-            />
+            <OtherTab draft={draft} patch={patch} />
           )}
 
           {activeTab === "feedback" && (

@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 import { useThemeSettings } from "@/hooks/useThemeSettings";
 import { subscribeMediaQuery } from "@/utils/mediaQuery";
-import { isAppearance, type Appearance } from "@/utils/themeSettings";
+import {
+  parseStoredAppearance,
+  readAppearancePreference,
+  writeAppearancePreference,
+} from "@/utils/appearancePreference";
+import type { Appearance } from "@/utils/themeSettings";
 
 type ResolvedAppearance = Exclude<Appearance, "system">;
 const APPEARANCE_BACKGROUND: Record<ResolvedAppearance, string> = {
@@ -9,7 +14,6 @@ const APPEARANCE_BACKGROUND: Record<ResolvedAppearance, string> = {
   light: "#f4f5f7",
   white: "#ffffff",
 };
-const APPEARANCE_STORAGE_KEY = "appearance";
 const APPEARANCE_DEFAULT_STORAGE_KEY = "appearance_default";
 const SYSTEM_DARK_QUERY = "(prefers-color-scheme: dark)";
 
@@ -40,23 +44,6 @@ function resolveAppearance(a: Appearance): ResolvedAppearance {
   return a;
 }
 
-function parseStoredAppearance(raw: string | null): Appearance | null {
-  if (raw == null) {
-    return null;
-  }
-
-  if (isAppearance(raw)) {
-    return raw;
-  }
-
-  try {
-    const parsed = JSON.parse(raw);
-    return isAppearance(parsed) ? parsed : null;
-  } catch {
-    return null;
-  }
-}
-
 function readStorageItem(key: string): string | null {
   try {
     return localStorage.getItem(key);
@@ -72,7 +59,10 @@ function writeStorageItem(key: string, value: string) {
 }
 
 function readStoredAppearance() {
-  const parsed = parseStoredAppearance(readStorageItem(APPEARANCE_STORAGE_KEY));
+  let parsed: Appearance | null = null;
+  try {
+    parsed = readAppearancePreference(localStorage);
+  } catch {}
   const fallback =
     parseStoredAppearance(readStorageItem(APPEARANCE_DEFAULT_STORAGE_KEY)) ??
     DEFAULTS.appearance;
@@ -83,8 +73,9 @@ function readStoredAppearance() {
 }
 
 function persistAppearance(value: Appearance) {
-  // 存成 JSON 字符串，以兼容会解析这个 key 的旧主题包。
-  writeStorageItem(APPEARANCE_STORAGE_KEY, JSON.stringify(value));
+  try {
+    writeAppearancePreference(localStorage, value);
+  } catch {}
 }
 
 function persistDefaultAppearance(value: Appearance) {
@@ -203,9 +194,6 @@ function clearSystemListeners() {
 function initializeAppearance() {
   const stored = readStoredAppearance();
   hasExplicitAppearancePreference = stored.hasExplicitPreference;
-  if (stored.hasExplicitPreference) {
-    persistAppearance(stored.appearance);
-  }
   snapshot = {
     appearance: stored.appearance,
     resolvedAppearance: resolveAppearance(stored.appearance),
@@ -236,12 +224,13 @@ export function usePreferences() {
   const themeSettings = useThemeSettings();
 
   useEffect(() => {
-    if (!themeSettings.isReady) return;
-    if (hasExplicitAppearancePreference) return;
+    if (!themeSettings.isReady || themeSettings.isError || hasExplicitAppearancePreference) {
+      return;
+    }
     const defaultAppearance = themeSettings.defaultAppearance;
     persistDefaultAppearance(defaultAppearance);
     commit({ appearance: defaultAppearance });
-  }, [themeSettings.defaultAppearance, themeSettings.isReady]);
+  }, [themeSettings.defaultAppearance, themeSettings.isError, themeSettings.isReady]);
 
   const setAppearance = useCallback((a: Appearance) => {
     hasExplicitAppearancePreference = true;

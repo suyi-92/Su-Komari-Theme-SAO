@@ -1,18 +1,15 @@
 import { LayoutTemplate, Compass } from "lucide-react";
 import { InstancePanel } from "@/components/instance/InstancePanel";
 import { APPEARANCE_OPTIONS } from "@/components/shell/appearanceOptions";
-import type { Appearance } from "@/utils/themeSettings";
 import { ToggleRow } from "../components/SettingControls";
 import type { ThemeDraft } from "../types";
 
 export function OtherTab({
   draft,
   patch,
-  setAppearance,
 }: {
   draft: ThemeDraft;
   patch: <K extends keyof ThemeDraft>(key: K, value: ThemeDraft[K]) => void;
-  setAppearance: (value: Appearance) => void;
 }) {
   return (
     <>
@@ -29,10 +26,7 @@ export function OtherTab({
                 type="button"
                 data-active={draft.defaultAppearance === value ? "true" : "false"}
                 aria-pressed={draft.defaultAppearance === value}
-                onClick={() => {
-                  patch("defaultAppearance", value);
-                  setAppearance(value);
-                }}
+                onClick={() => patch("defaultAppearance", value)}
                 className="inline-flex items-center justify-center gap-2"
               >
                 <Icon size={14} />
